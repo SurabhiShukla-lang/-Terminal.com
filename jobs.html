@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPRMS — Jobs & Companies</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Jost:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #faf8f5;
+    --deep: #f5f0ea;
+    --mid: #ede6dc;
+    --panel: #f9f6f1;
+    --border: rgba(139,90,60,0.15);
+    --ice: #8b5a3c;
+    --frost: #3d2314;
+    --glow: #b5663a;
+    --accent: #c97b4b;
+    --gold: #8b5a3c;
+    --green: #6b7c5c;
+    --red: #c0392b;
+    --text: #3d2314;
+    --muted: rgba(93,60,40,0.6);
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --sans: 'Jost', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--navy); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+
+  #snow { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .flake { position: absolute; top: -20px; color: rgba(139,90,60,0.3); font-size: 16px; animation: fall linear infinite; user-select: none; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(360deg); opacity: 0; } }
+
+  .aurora { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse 80% 50% at 20% 10%, rgba(181,102,58,0.06) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(201,123,75,0.04) 0%, transparent 50%); animation: auroraShift 12s ease-in-out infinite alternate; }
+  @keyframes auroraShift { from { opacity: 1; } to { opacity: 0.6; filter: hue-rotate(15deg); } }
+
+  header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; height: 72px; border-bottom: 1px solid var(--border); background: rgba(250,248,245,0.97); backdrop-filter: blur(16px); }
+  .logo-sm { display: flex; align-items: center; gap: 10px; font-family: var(--serif); font-size: 1.2rem; font-weight: 900; background: linear-gradient(135deg, var(--frost), var(--glow)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; cursor: pointer; }
+  .logo-sm .mark { width: 32px; height: 32px; border: 2px solid var(--glow); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: var(--glow); box-shadow: 0 0 12px rgba(181,102,58,0.25); }
+  .header-right { display: flex; align-items: center; gap: 1rem; }
+  .header-btn { background: none; border: none; cursor: pointer; font-size: 1.1rem; color: var(--text); }
+
+  .content { position: relative; z-index: 1; margin-top: 72px; padding: 2.5rem; max-width: 1400px; margin-left: auto; margin-right: auto; }
+
+  .header-title { font-family: var(--serif); font-size: 2.5rem; font-weight: 900; background: linear-gradient(135deg, var(--frost) 0%, var(--glow) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.5rem; }
+  .header-sub { color: var(--muted); margin-bottom: 2rem; }
+
+  .layout { display: grid; grid-template-columns: 280px 1fr; gap: 2rem; }
+
+  .sidebar { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; height: fit-content; }
+  .sidebar-section { margin-bottom: 1.5rem; }
+  .sidebar-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.8rem; font-weight: 600; }
+  .sidebar-item { padding: 10px 12px; border-radius: 8px; cursor: pointer; color: var(--muted); transition: all 0.2s; font-size: 0.9rem; }
+  .sidebar-item:hover, .sidebar-item.active { background: rgba(181,102,58,0.12); color: var(--glow); }
+
+  .tabs { display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border); }
+  .tab-btn { padding: 12px 20px; border: none; background: none; color: var(--muted); cursor: pointer; font-size: 0.95rem; font-weight: 600; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab-btn:hover, .tab-btn.active { color: var(--glow); border-bottom-color: var(--glow); }
+
+  .job-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.6rem;
+    margin-bottom: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .job-card:hover {
+    transform: translateX(4px);
+    box-shadow: 0 8px 32px rgba(181,102,58,0.12);
+  }
+
+  .job-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem; }
+  .job-title { font-family: var(--serif); font-size: 1.2rem; font-weight: 700; color: var(--frost); }
+  .company-name { color: var(--muted); font-size: 0.9rem; margin: 0.3rem 0; }
+  .job-meta { display: flex; gap: 1.5rem; margin: 1rem 0; flex-wrap: wrap; }
+  .meta-item { display: flex; align-items: center; gap: 4px; font-size: 0.85rem; color: var(--muted); }
+  .meta-item.salary { color: var(--gold); font-weight: 600; }
+  .job-desc { font-size: 0.9rem; color: var(--muted); line-height: 1.6; margin-bottom: 1rem; }
+  .job-tags { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1rem; }
+  .tag { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; background: rgba(181,102,58,0.15); color: var(--glow); }
+  .job-footer { display: flex; justify-content: space-between; align-items: center; }
+
+  .btn { padding: 10px 18px; border: none; border-radius: 8px; cursor: pointer; font-family: var(--sans); font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
+  .btn-primary { background: linear-gradient(135deg, var(--glow), var(--accent)); color: #faf8f5; }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+  .btn-ghost:hover { background: rgba(181,102,58,0.1); border-color: var(--glow); color: var(--glow); }
+
+  .company-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.4rem; margin-bottom: 2rem; }
+
+  .company-card {
+    background: linear-gradient(135deg, var(--mid) 0%, var(--panel) 100%);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.6rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .company-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 40px rgba(181,102,58,0.15);
+  }
+
+  .company-logo { font-size: 2.5rem; margin-bottom: 0.8rem; }
+  .company-name-card { font-weight: 600; color: var(--frost); margin-bottom: 0.4rem; }
+  .company-desc { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.8rem; line-height: 1.5; }
+  .company-stats { display: flex; justify-content: space-around; font-size: 0.8rem; color: var(--muted); margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid rgba(139,90,60,0.12); }
+
+  .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #f5f0ea; backdrop-filter: blur(8px); z-index: 200; align-items: center; justify-content: center; }
+  .modal.active { display: flex; }
+  .modal-content { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; }
+  .modal-header { font-family: var(--serif); font-size: 1.8rem; font-weight: 700; color: var(--frost); margin-bottom: 1.5rem; }
+  .close-btn { position: absolute; top: 20px; right: 20px; background: none; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; }
+
+  @media (max-width: 1024px) { .layout { grid-template-columns: 1fr; } .sidebar { display: none; } }
+  @media (max-width: 640px) { .content { padding: 1.5rem; } .header-title { font-size: 1.8rem; } .job-header { flex-direction: column; } }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--deep); }
+  ::-webkit-scrollbar-thumb { background: rgba(181,102,58,0.25); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div id="snow"></div>
+<div class="aurora"></div>
+
+<header>
+  <div class="logo-sm" onclick="window.location.href='dashboard-user.html'">
+    <div class="mark">S</div>
+    <span>SPRMS</span>
+  </div>
+  <div class="header-right">
+    <button class="header-btn">🔔</button>
+    <button class="header-btn" onclick="logout()">👤</button>
+  </div>
+</header>
+
+<div class="content">
+  <h1 class="header-title">Jobs & Companies</h1>
+  <p class="header-sub">Latest opportunities from 500+ verified companies</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('jobs', this)">💼 All Jobs</button>
+    <button class="tab-btn" onclick="switchTab('companies', this)">🏢 Companies</button>
+    <button class="tab-btn" onclick="switchTab('applied', this)">📋 My Applications</button>
+    <button class="tab-btn" onclick="switchTab('interviews', this)">📅 Interviews</button>
+  </div>
+
+  <div class="layout">
+    <!-- Sidebar Filters -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">Experience Level</div>
+        <div class="sidebar-item active" onclick="setActive(this)">Entry Level</div>
+        <div class="sidebar-item" onclick="setActive(this)">Mid Level</div>
+        <div class="sidebar-item" onclick="setActive(this)">Senior</div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Package (LPA)</div>
+        <div class="sidebar-item" onclick="setActive(this)">0-10</div>
+        <div class="sidebar-item" onclick="setActive(this)">10-20</div>
+        <div class="sidebar-item" onclick="setActive(this)">20-40</div>
+        <div class="sidebar-item" onclick="setActive(this)">40+</div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Location</div>
+        <div class="sidebar-item" onclick="setActive(this)">Remote</div>
+        <div class="sidebar-item" onclick="setActive(this)">Bangalore</div>
+        <div class="sidebar-item" onclick="setActive(this)">Mumbai</div>
+        <div class="sidebar-item" onclick="setActive(this)">Delhi</div>
+        <div class="sidebar-item" onclick="setActive(this)">Hyderabad</div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Role Type</div>
+        <div class="sidebar-item" onclick="setActive(this)">Full-Time</div>
+        <div class="sidebar-item" onclick="setActive(this)">Internship</div>
+        <div class="sidebar-item" onclick="setActive(this)">Contract</div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div>
+      <!-- Jobs Tab -->
+      <div id="tab-jobs" style="display:block">
+        <div class="job-card">
+          <div class="job-header">
+            <div>
+              <div class="job-title">Software Engineer II</div>
+              <div class="company-name">Google India</div>
+            </div>
+            <button class="btn-ghost" style="border:none;font-size:1.2rem;cursor:pointer">❤️</button>
+          </div>
+          <div class="job-meta">
+            <div class="meta-item">📍 Bangalore</div>
+            <div class="meta-item">⏱ Full-Time</div>
+            <div class="meta-item salary">₹42 - 50 LPA</div>
+            <div class="meta-item">🎓 B.Tech</div>
+          </div>
+          <div class="job-desc">
+            Build and maintain large-scale systems handling millions of requests. Work on challenging problems in distributed systems, APIs, and infrastructure.
+          </div>
+          <div class="job-tags">
+            <span class="tag">Java</span>
+            <span class="tag">Python</span>
+            <span class="tag">System Design</span>
+            <span class="tag">Cloud</span>
+            <span class="tag">Microservices</span>
+          </div>
+          <div class="job-footer">
+            <span style="font-size:0.85rem;color:var(--muted)">Posted 2 days ago</span>
+            <button class="btn btn-primary" onclick="applyJob('Google')">Apply Now</button>
+          </div>
+        </div>
+
+        <div class="job-card">
+          <div class="job-header">
+            <div>
+              <div class="job-title">Full Stack Developer</div>
+              <div class="company-name">Microsoft</div>
+            </div>
+            <button class="btn-ghost" style="border:none;font-size:1.2rem;cursor:pointer">❤️</button>
+          </div>
+          <div class="job-meta">
+            <div class="meta-item">📍 Hyderabad</div>
+            <div class="meta-item">⏱ Full-Time</div>
+            <div class="meta-item salary">₹38 - 45 LPA</div>
+            <div class="meta-item">🎓 B.Tech</div>
+          </div>
+          <div class="job-desc">
+            Join our Azure team and help build the next generation of cloud services. Develop full-stack applications with React, Node.js, and cloud technologies.
+          </div>
+          <div class="job-tags">
+            <span class="tag">React</span>
+            <span class="tag">Node.js</span>
+            <span class="tag">Azure</span>
+            <span class="tag">MongoDB</span>
+          </div>
+          <div class="job-footer">
+            <span style="font-size:0.85rem;color:var(--muted)">Posted 5 days ago</span>
+            <button class="btn btn-primary" onclick="applyJob('Microsoft')">Apply Now</button>
+          </div>
+        </div>
+
+        <div class="job-card">
+          <div class="job-header">
+            <div>
+              <div class="job-title">Data Scientist</div>
+              <div class="company-name">Amazon</div>
+            </div>
+            <button class="btn-ghost" style="border:none;font-size:1.2rem;cursor:pointer">❤️</button>
+          </div>
+          <div class="job-meta">
+            <div class="meta-item">📍 Bangalore</div>
+            <div class="meta-item">⏱ Full-Time</div>
+            <div class="meta-item salary">₹40 - 55 LPA</div>
+            <div class="meta-item">🎓 B.Tech/M.Tech</div>
+          </div>
+          <div class="job-desc">
+            Work on machine learning models that impact millions of customers worldwide. Analyze large datasets and build scalable ML solutions.
+          </div>
+          <div class="job-tags">
+            <span class="tag">Python</span>
+            <span class="tag">Machine Learning</span>
+            <span class="tag">SQL</span>
+            <span class="tag">TensorFlow</span>
+          </div>
+          <div class="job-footer">
+            <span style="font-size:0.85rem;color:var(--muted)">Posted 1 day ago</span>
+            <button class="btn btn-primary" onclick="applyJob('Amazon')">Apply Now</button>
+          </div>
+        </div>
+
+        <div class="job-card">
+          <div class="job-header">
+            <div>
+              <div class="job-title">DevOps Engineer</div>
+              <div class="company-name">Adobe</div>
+            </div>
+            <button class="btn-ghost" style="border:none;font-size:1.2rem;cursor:pointer">❤️</button>
+          </div>
+          <div class="job-meta">
+            <div class="meta-item">📍 Noida</div>
+            <div class="meta-item">⏱ Full-Time</div>
+            <div class="meta-item salary">₹35 - 42 LPA</div>
+            <div class="meta-item">🎓 B.Tech</div>
+          </div>
+          <div class="job-desc">
+            Manage cloud infrastructure, CI/CD pipelines, and containerization. Ensure high availability and security for our platforms.
+          </div>
+          <div class="job-tags">
+            <span class="tag">Kubernetes</span>
+            <span class="tag">Docker</span>
+            <span class="tag">AWS</span>
+            <span class="tag">Jenkins</span>
+          </div>
+          <div class="job-footer">
+            <span style="font-size:0.85rem;color:var(--muted)">Posted 3 days ago</span>
+            <button class="btn btn-primary" onclick="applyJob('Adobe')">Apply Now</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Companies Tab -->
+      <div id="tab-companies" style="display:none">
+        <h2 style="color:var(--frost);margin-bottom:1.5rem">Top Hiring Companies</h2>
+        <div class="company-grid">
+          <div class="company-card">
+            <div class="company-logo">🔵</div>
+            <div class="company-name-card">Google</div>
+            <div class="company-desc">Search, ads, cloud, and more at scale</div>
+            <div class="company-stats">
+              <div>📍 24 jobs</div>
+              <div>⭐ 4.8</div>
+            </div>
+          </div>
+
+          <div class="company-card">
+            <div class="company-logo">🪟</div>
+            <div class="company-name-card">Microsoft</div>
+            <div class="company-desc">Cloud, software, and enterprise solutions</div>
+            <div class="company-stats">
+              <div>📍 18 jobs</div>
+              <div>⭐ 4.7</div>
+            </div>
+          </div>
+
+          <div class="company-card">
+            <div class="company-logo">📦</div>
+            <div class="company-name-card">Amazon</div>
+            <div class="company-desc">E-commerce, AWS, and cloud infrastructure</div>
+            <div class="company-stats">
+              <div>📍 32 jobs</div>
+              <div>⭐ 4.5</div>
+            </div>
+          </div>
+
+          <div class="company-card">
+            <div class="company-logo">🔴</div>
+            <div class="company-name-card">Meta</div>
+            <div class="company-desc">Social media, VR, and AI technologies</div>
+            <div class="company-stats">
+              <div>📍 12 jobs</div>
+              <div>⭐ 4.4</div>
+            </div>
+          </div>
+
+          <div class="company-card">
+            <div class="company-logo">🍎</div>
+            <div class="company-name-card">Apple</div>
+            <div class="company-desc">Hardware, software, and innovation</div>
+            <div class="company-stats">
+              <div>📍 8 jobs</div>
+              <div>⭐ 4.6</div>
+            </div>
+          </div>
+
+          <div class="company-card">
+            <div class="company-logo">🔶</div>
+            <div class="company-name-card">Flipkart</div>
+            <div class="company-desc">E-commerce and fintech in India</div>
+            <div class="company-stats">
+              <div>📍 15 jobs</div>
+              <div>⭐ 4.3</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Applications Tab -->
+      <div id="tab-applied" style="display:none">
+        <h2 style="color:var(--frost);margin-bottom:1.5rem">My Applications</h2>
+        <div class="job-card">
+          <div class="job-header">
+            <div>
+              <div class="job-title">Software Engineer II</div>
+              <div class="company-name">Google India</div>
+            </div>
+            <span style="padding:4px 12px;border-radius:20px;background:rgba(79,255,176,0.15);color:var(--green);font-size:0.75rem">Applied</span>
+          </div>
+          <div class="job-meta">
+            <div class="meta-item">Applied: 2 days ago</div>
+            <div class="meta-item">Status: Under Review</div>
+          </div>
+        </div>
+
+        <div class="job-card">
+          <div class="job-header">
+            <div>
+              <div class="job-title">Full Stack Developer</div>
+              <div class="company-name">Microsoft</div>
+            </div>
+            <span style="padding:4px 12px;border-radius:20px;background:rgba(255,216,122,0.15);color:var(--gold);font-size:0.75rem">Interview Scheduled</span>
+          </div>
+          <div class="job-meta">
+            <div class="meta-item">Applied: 5 days ago</div>
+            <div class="meta-item">Interview: March 25, 2 PM</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interviews Tab -->
+      <div id="tab-interviews" style="display:none">
+        <h2 style="color:var(--frost);margin-bottom:1.5rem">Scheduled Interviews</h2>
+        <div class="job-card">
+          <div class="job-header">
+            <div>
+              <div class="job-title">Full Stack Developer Interview</div>
+              <div class="company-name">Microsoft</div>
+            </div>
+            <span style="padding:4px 12px;border-radius:20px;background:rgba(181,102,58,0.15);color:var(--glow);font-size:0.75rem">Upcoming</span>
+          </div>
+          <div class="job-meta">
+            <div class="meta-item">📅 March 25, 2024</div>
+            <div class="meta-item">⏰ 2:00 PM IST</div>
+            <div class="meta-item">📞 Video Call</div>
+          </div>
+          <div class="job-desc">Round 1: Technical Screen - DSA & System Design</div>
+          <div class="job-footer">
+            <button class="btn btn-primary" onclick="joinInterview()">Join Interview</button>
+          </div>
+        </div>
+
+        <div class="job-card">
+          <div class="job-header">
+            <div>
+              <div class="job-title">Data Scientist Interview</div>
+              <div class="company-name">Amazon</div>
+            </div>
+            <span style="padding:4px 12px;border-radius:20px;background:rgba(79,255,176,0.15);color:var(--green);font-size:0.75rem">Completed</span>
+          </div>
+          <div class="job-meta">
+            <div class="meta-item">📅 March 20, 2024</div>
+            <div class="meta-item">⏰ 3:00 PM IST</div>
+            <div class="meta-item">Result: Moved to HR Round</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const snow = document.getElementById('snow');
+  const FLAKES = ['❄','❅','❆','✦','·','*'];
+  for (let i = 0; i < 45; i++) {
+    const f = document.createElement('div');
+    f.className = 'flake';
+    f.textContent = FLAKES[Math.floor(Math.random() * FLAKES.length)];
+    f.style.left = Math.random() * 100 + '%';
+    f.style.fontSize = (10 + Math.random() * 18) + 'px';
+    f.style.opacity = 0.3 + Math.random() * 0.5;
+    const dur = 8 + Math.random() * 14;
+    f.style.animationDuration = dur + 's';
+    f.style.animationDelay = -Math.random() * dur + 's';
+    snow.appendChild(f);
+  }
+
+  function switchTab(tab, btn) {
+    document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
+    document.getElementById('tab-' + tab).style.display = 'block';
+    
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function setActive(el) {
+    el.parentElement.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function applyJob(company) {
+    alert(`✓ Applied successfully to ${company}! Check your applications tab for updates.`);
+  }
+
+  function joinInterview() {
+    alert('🎥 Opening interview room...');
+  }
+
+  function logout() { window.__sprmsLogout ? window.__sprmsLogout() : (localStorage.removeItem('user'), window.location.href='index.html'); }
+</script>
+
+
+<!-- Supabase SDK + Shared Auth -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
+<script>
+// Bridge: expose auth.js logout to inline onclick handlers
+document.addEventListener('DOMContentLoaded', function() {
+  window.__sprmsLogout = logout;
+  requireAuth();
+});
+</script>
+</body>
+</html>

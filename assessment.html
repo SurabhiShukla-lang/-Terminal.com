@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillBridge — Smart Onboarding</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Jost:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root {
+    --navy: #faf8f5;
+    --deep: #f5f0ea;
+    --mid: #ede6dc;
+    --panel: #f9f6f1;
+    --border: rgba(139,90,60,0.15);
+    --ice: #8b5a3c;
+    --frost: #3d2314;
+    --glow: #b5663a;
+    --accent: #c97b4b;
+    --gold: #8b5a3c;
+    --green: #6b7c5c;
+    --red: #c0392b;
+    --text: #3d2314;
+    --muted: rgba(93,60,40,0.6);
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --sans: 'Jost', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--navy);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  #snow { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .flake {
+    position: absolute; top: -20px;
+    color: rgba(139,90,60,0.3); font-size: 16px;
+    animation: fall linear infinite; user-select: none;
+  }
+  @keyframes fall { to { transform: translateY(110vh) rotate(360deg); opacity: 0; } }
+
+  .aurora {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: radial-gradient(ellipse 80% 50% at 20% 10%, rgba(181,102,58,0.06) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(201,123,75,0.04) 0%, transparent 50%);
+    animation: auroraShift 12s ease-in-out infinite alternate;
+  }
+  @keyframes auroraShift { from { opacity:1; } to { opacity:0.6; filter:hue-rotate(15deg); } }
+
+  .container {
+    position: relative; z-index: 10;
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 2rem;
+  }
+
+  /* ── Screens ── */
+  .screen { display: none; max-width: 820px; width: 100%; }
+  .screen.active { display: block; animation: slideIn 0.35s ease; }
+  @keyframes slideIn { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+
+  .step-header { display:flex; gap:1rem; margin-bottom:2rem; align-items:center; }
+  .step-number {
+    width:40px; height:40px; border-radius:50%;
+    background:rgba(181,102,58,0.2); border:2px solid var(--glow);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; color:var(--glow); font-size:1.2rem; flex-shrink:0;
+  }
+  .step-title { font-family:var(--serif); font-size:1.8rem; font-weight:700; color:var(--frost); }
+  .step-subtitle { color:var(--muted); font-size:0.95rem; margin-top:0.5rem; }
+
+  .assessment-nav { display:flex; gap:1rem; justify-content:center; margin-top:2rem; flex-wrap:wrap; }
+  .btn-nav {
+    padding:12px 28px; border:1px solid var(--border);
+    background:transparent; border-radius:8px; color:var(--text);
+    cursor:pointer; font-weight:600; transition:all 0.2s; font-size:0.95rem;
+  }
+  .btn-nav:hover { border-color:var(--glow); background:rgba(181,102,58,0.1); color:var(--glow); }
+  .btn-nav-primary {
+    background:linear-gradient(135deg, var(--glow), var(--accent));
+    color:var(--navy); border:none;
+  }
+  .btn-nav-primary:hover { opacity:0.9; }
+  .btn-nav:disabled { opacity:0.4; cursor:not-allowed; }
+
+  /* ── Choice screen ── */
+  .choice-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin:2rem 0; }
+  @media(max-width:600px){ .choice-grid{ grid-template-columns:1fr; } }
+  .choice-card {
+    background:var(--panel); border:2px solid var(--border); border-radius:16px;
+    padding:2rem; cursor:pointer; transition:all 0.25s; text-align:center;
+  }
+  .choice-card:hover { border-color:var(--glow); transform:translateY(-4px); box-shadow:0 12px 32px rgba(181,102,58,0.15); }
+  .choice-card.selected { border-color:var(--glow); background:rgba(181,102,58,0.1); }
+  .choice-icon { font-size:3rem; margin-bottom:1rem; }
+  .choice-title { font-family:var(--serif); font-size:1.3rem; color:var(--frost); margin-bottom:0.5rem; }
+  .choice-desc { color:var(--muted); font-size:0.88rem; line-height:1.6; }
+
+  /* ── Resume Upload ── */
+  .upload-zone {
+    border:2px dashed var(--border); border-radius:14px; padding:3rem 2rem;
+    text-align:center; cursor:pointer; transition:all 0.2s; margin:2rem 0;
+    background:rgba(181,102,58,0.03);
+  }
+  .upload-zone:hover, .upload-zone.drag-over { border-color:var(--glow); background:rgba(181,102,58,0.08); }
+  .upload-zone.has-file { border-color:var(--green); background:rgba(79,255,176,0.05); }
+  .upload-icon { font-size:3rem; margin-bottom:1rem; }
+  .upload-label { color:var(--frost); font-weight:600; font-size:1.1rem; margin-bottom:0.5rem; }
+  .upload-hint { color:var(--muted); font-size:0.85rem; }
+  #resume-file-input { display:none; }
+
+  /* ── API Key section ── */
+  .api-key-section {
+    background:rgba(181,102,58,0.06); border:1px solid rgba(181,102,58,0.2);
+    border-radius:12px; padding:1.2rem 1.5rem; margin:1.2rem 0;
+  }
+  .api-key-label { font-size:0.82rem; color:var(--muted); margin-bottom:0.5rem; }
+  .api-key-input {
+    width:100%; background:var(--deep); border:1px solid var(--border);
+    color:var(--text); padding:0.7rem 1rem; border-radius:8px;
+    font-family:var(--mono); font-size:0.85rem; outline:none;
+    transition:border-color 0.2s;
+  }
+  .api-key-input:focus { border-color:var(--glow); }
+  .api-key-steps { font-size:0.8rem; color:var(--muted); margin-top:0.5rem; line-height:1.8; }
+  .api-key-steps a { color:var(--glow); }
+
+  /* ── Loading / Thinking ── */
+  .loading-box {
+    background:var(--panel); border:1px solid var(--border); border-radius:16px;
+    padding:3rem 2rem; text-align:center; margin:2rem 0;
+  }
+  .spinner { font-size:2.5rem; animation:spin 1.2s linear infinite; display:inline-block; margin-bottom:1rem; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .loading-title { font-family:var(--serif); font-size:1.5rem; color:var(--frost); margin-bottom:0.5rem; }
+  .loading-sub { color:var(--muted); font-size:0.9rem; }
+  .loading-steps { margin-top:1.5rem; display:flex; flex-direction:column; gap:0.5rem; }
+  .loading-step {
+    padding:0.6rem 1rem; border-radius:8px; font-size:0.85rem;
+    background:rgba(181,102,58,0.06); border:1px solid var(--border);
+    color:var(--muted); transition:all 0.3s;
+  }
+  .loading-step.done { background:rgba(79,255,176,0.08); border-color:rgba(79,255,176,0.3); color:var(--green); }
+  .loading-step.active { background:rgba(181,102,58,0.12); border-color:var(--glow); color:var(--glow); }
+
+  /* ── Language picker (skip path) ── */
+  .lang-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:1rem; margin:2rem 0; }
+  .lang-card {
+    background:var(--panel); border:2px solid var(--border); border-radius:14px;
+    padding:1.5rem; cursor:pointer; transition:all 0.2s; text-align:center;
+  }
+  .lang-card:hover { border-color:var(--glow); transform:translateY(-3px); }
+  .lang-card.selected { border-color:var(--glow); background:rgba(181,102,58,0.1); }
+  .lang-emoji { font-size:2.2rem; margin-bottom:0.8rem; }
+  .lang-name { font-weight:700; color:var(--frost); margin-bottom:0.3rem; }
+  .lang-tagline { font-size:0.78rem; color:var(--muted); }
+
+  /* Language info drawer */
+  .lang-drawer {
+    background:var(--panel); border:1px solid var(--glow);
+    border-radius:14px; padding:1.5rem; margin-top:1rem;
+    animation:slideIn 0.2s ease;
+  }
+  .lang-drawer-title { font-family:var(--serif); font-size:1.2rem; color:var(--frost); margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem; }
+  .lang-info-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  @media(max-width:500px){ .lang-info-grid{ grid-template-columns:1fr; } }
+  .lang-info-item { background:var(--deep); border-radius:8px; padding:0.8rem 1rem; }
+  .lang-info-item label { font-size:0.72rem; color:var(--muted); display:block; margin-bottom:0.3rem; }
+  .lang-info-item span { font-size:0.88rem; color:var(--text); line-height:1.5; }
+  .lang-pros { margin-top:1rem; }
+  .lang-pros ul { padding-left:1.2rem; }
+  .lang-pros li { font-size:0.85rem; color:var(--text); margin-bottom:0.3rem; line-height:1.5; }
+
+  /* ── Roadmap (roadmap.sh style) ── */
+  .roadmap-header { text-align:center; margin-bottom:2.5rem; }
+  .roadmap-badge {
+    display:inline-block; padding:0.4rem 1rem; background:rgba(181,102,58,0.15);
+    border:1px solid rgba(181,102,58,0.35); border-radius:20px;
+    font-size:0.82rem; color:var(--glow); margin-bottom:1rem;
+  }
+  .roadmap-title { font-family:var(--serif); font-size:2.2rem; color:var(--frost); margin-bottom:0.5rem; }
+  .roadmap-meta { color:var(--muted); font-size:0.9rem; }
+
+  .roadmap-track { position:relative; padding:0 1rem; }
+  .roadmap-track::before {
+    content:''; position:absolute; left:50%; top:0; bottom:0;
+    width:2px; background:linear-gradient(to bottom, var(--glow), var(--accent), transparent);
+    transform:translateX(-50%); z-index:0;
+  }
+  @media(max-width:640px){ .roadmap-track::before{ left:20px; } }
+
+  .roadmap-phase { position:relative; z-index:1; margin-bottom:2.5rem; }
+  .phase-label {
+    text-align:center; margin-bottom:1.5rem;
+  }
+  @media(max-width:640px){ .phase-label{ text-align:left; padding-left:50px; } }
+  .phase-badge {
+    display:inline-block; padding:0.45rem 1.4rem;
+    border-radius:20px; font-weight:700; font-size:0.85rem; letter-spacing:0.04em;
+  }
+  .phase-foundation { background:rgba(79,255,176,0.15); border:1px solid rgba(79,255,176,0.4); color:var(--green); }
+  .phase-core       { background:rgba(181,102,58,0.15); border:1px solid rgba(181,102,58,0.4); color:var(--glow); }
+  .phase-advanced   { background:rgba(255,216,122,0.15); border:1px solid rgba(255,216,122,0.4); color:var(--gold); }
+  .phase-mastery    { background:rgba(255,107,138,0.15); border:1px solid rgba(255,107,138,0.4); color:var(--red); }
+
+  .roadmap-nodes { display:flex; flex-direction:column; gap:1rem; }
+  .roadmap-node {
+    display:flex; align-items:stretch; gap:0; position:relative;
+  }
+  .roadmap-node:nth-child(even) { flex-direction:row-reverse; }
+  @media(max-width:640px){ .roadmap-node, .roadmap-node:nth-child(even) { flex-direction:row; } }
+
+  .node-spacer { flex:1; }
+  @media(max-width:640px){ .node-spacer{ display:none; } }
+
+  .node-connector {
+    width:60px; display:flex; flex-direction:column; align-items:center; flex-shrink:0;
+  }
+  @media(max-width:640px){ .node-connector{ width:40px; } }
+  .node-dot {
+    width:18px; height:18px; border-radius:50%; flex-shrink:0;
+    border:3px solid var(--glow); background:var(--navy);
+    box-shadow:0 0 10px rgba(181,102,58,0.5); margin-top:16px;
+  }
+  .node-dot.done  { background:var(--green); border-color:var(--green); box-shadow:0 0 10px rgba(79,255,176,0.5); }
+  .node-dot.focus { background:var(--glow);  border-color:var(--glow);  box-shadow:0 0 14px rgba(181,102,58,0.7); }
+  .node-dot.future{ background:var(--navy);  border-color:var(--border); box-shadow:none; }
+
+  .node-card {
+    flex:1; background:var(--panel); border:1px solid var(--border);
+    border-radius:12px; padding:1.2rem 1.4rem;
+    transition:transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  }
+  .node-card:hover { transform:translateY(-2px); border-color:var(--glow); box-shadow:0 8px 24px rgba(181,102,58,0.1); }
+  .node-card.node-done   { border-left:3px solid var(--green); }
+  .node-card.node-focus  { border-left:3px solid var(--glow); box-shadow:0 0 20px rgba(181,102,58,0.12); }
+  .node-card.node-future { opacity:0.75; }
+  .node-card-top { display:flex; justify-content:space-between; align-items:start; margin-bottom:0.6rem; }
+  .node-title { font-weight:700; color:var(--frost); font-size:0.98rem; }
+  .node-status {
+    font-size:0.72rem; font-weight:600; padding:0.2rem 0.6rem; border-radius:10px;
+    white-space:nowrap; margin-left:0.5rem; flex-shrink:0;
+  }
+  .status-done   { background:rgba(79,255,176,0.15); color:var(--green); }
+  .status-focus  { background:rgba(181,102,58,0.2);  color:var(--glow); }
+  .status-upcoming{ background:rgba(168,216,240,0.08); color:var(--muted); }
+  .node-desc { color:var(--muted); font-size:0.83rem; line-height:1.6; }
+  .node-tags { display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.7rem; }
+  .node-tag {
+    font-size:0.72rem; padding:0.2rem 0.55rem; border-radius:6px;
+    background:rgba(181,102,58,0.1); border:1px solid rgba(181,102,58,0.2); color:var(--glow);
+    font-family:var(--mono);
+  }
+  .node-time { font-size:0.75rem; color:var(--muted); margin-top:0.5rem; }
+
+  /* error box */
+  .error-box {
+    background:rgba(255,107,138,0.12); border:1px solid rgba(255,107,138,0.3);
+    border-radius:8px; padding:0.8rem 1rem; color:var(--red);
+    font-size:0.85rem; margin:1rem 0; display:none;
+  }
+
+  /* resume summary card */
+  .resume-summary {
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    padding:1.5rem; margin:1.5rem 0;
+  }
+  .resume-summary h3 { color:var(--glow); font-size:0.9rem; margin-bottom:1rem; letter-spacing:0.05em; }
+  .summary-chips { display:flex; flex-wrap:wrap; gap:0.5rem; }
+  .summary-chip {
+    padding:0.3rem 0.8rem; border-radius:20px; font-size:0.8rem; font-weight:600;
+    background:rgba(181,102,58,0.1); border:1px solid rgba(181,102,58,0.25); color:var(--glow);
+  }
+</style>
+</head>
+<body>
+
+<div id="snow"></div>
+<div class="aurora"></div>
+
+<div class="container">
+<div style="width:100%;max-width:820px">
+
+  <!-- ═══════════════════════════════════════════════
+       SCREEN 1 — Choose path
+  ═══════════════════════════════════════════════ -->
+  <div class="screen active" id="screen-choose">
+    <div class="step-header">
+      <div class="step-number">1</div>
+      <div>
+        <div class="step-title">Welcome to SkillBridge</div>
+        <div class="step-subtitle">Let's personalise your learning journey. Tell us where you're starting from.</div>
+      </div>
+    </div>
+
+    <div class="choice-grid">
+      <div class="choice-card" id="card-resume" onclick="selectPath('resume')">
+        <div class="choice-icon">📄</div>
+        <div class="choice-title">I have experience</div>
+        <div class="choice-desc">Upload your resume and our AI will analyse your skills, projects, and experience to build a precise roadmap tailored just for you.</div>
+      </div>
+      <div class="choice-card" id="card-beginner" onclick="selectPath('beginner')">
+        <div class="choice-icon">🚀</div>
+        <div class="choice-title">I'm just starting out</div>
+        <div class="choice-desc">No resume yet? No problem. Explore different coding paths, understand what to learn first, and get a beginner-friendly roadmap.</div>
+      </div>
+    </div>
+
+    <div class="assessment-nav">
+      <button class="btn-nav btn-nav-primary" id="btn-choose-next" onclick="goFromChoice()" disabled>Continue →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       SCREEN 2A — Resume upload
+  ═══════════════════════════════════════════════ -->
+  <div class="screen" id="screen-resume">
+    <div class="step-header">
+      <div class="step-number">2</div>
+      <div>
+        <div class="step-title">Upload Your Resume</div>
+        <div class="step-subtitle">Our AI will read every detail — skills, projects, experience — and build your personalised roadmap.</div>
+      </div>
+    </div>
+
+    <div class="api-key-section" style="background:rgba(79,255,176,0.06);border-color:rgba(79,255,176,0.25)">
+      <div class="api-key-label" style="color:var(--green)">✦ Powered by Groq AI — no setup needed</div>
+      <div class="api-key-steps" style="color:var(--muted)">Just upload your resume and click Analyse. AI analysis is ready to go.</div>
+    </div>
+
+    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('resume-file-input').click()"
+         ondragover="handleDrag(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+      <div class="upload-icon" id="upload-icon">📎</div>
+      <div class="upload-label" id="upload-label">Drop your resume here or click to browse</div>
+      <div class="upload-hint" id="upload-hint">Supports PDF, DOC, DOCX, TXT — up to 5 MB</div>
+    </div>
+    <input type="file" id="resume-file-input" accept=".pdf,.doc,.docx,.txt" onchange="handleFileSelect(event)">
+
+    <div class="error-box" id="resume-error"></div>
+
+    <div class="assessment-nav">
+      <button class="btn-nav" onclick="showScreen('screen-choose')">← Back</button>
+      <button class="btn-nav btn-nav-primary" id="btn-analyse" onclick="startResumeAnalysis()" disabled>Analyse with AI →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       SCREEN 2B — Language Explorer (beginner / skip)
+  ═══════════════════════════════════════════════ -->
+  <div class="screen" id="screen-languages">
+    <div class="step-header">
+      <div class="step-number">2</div>
+      <div>
+        <div class="step-title">Choose Your First Language</div>
+        <div class="step-subtitle">Click a language to learn what it's for, who uses it, and why it might be right for you. Then pick one to get started.</div>
+      </div>
+    </div>
+
+    <div class="lang-grid">
+      <div class="lang-card" id="langcard-python" onclick="toggleLangInfo('python')">
+        <div class="lang-emoji">🐍</div>
+        <div class="lang-name">Python</div>
+        <div class="lang-tagline">AI, Data Science, Automation</div>
+      </div>
+      <div class="lang-card" id="langcard-javascript" onclick="toggleLangInfo('javascript')">
+        <div class="lang-emoji">⚡</div>
+        <div class="lang-name">JavaScript</div>
+        <div class="lang-tagline">Web, Full-Stack, Apps</div>
+      </div>
+      <div class="lang-card" id="langcard-java" onclick="toggleLangInfo('java')">
+        <div class="lang-emoji">☕</div>
+        <div class="lang-name">Java</div>
+        <div class="lang-tagline">Backend, Android, Enterprise</div>
+      </div>
+      <div class="lang-card" id="langcard-cpp" onclick="toggleLangInfo('cpp')">
+        <div class="lang-emoji">⚙️</div>
+        <div class="lang-name">C / C++</div>
+        <div class="lang-tagline">Systems, Competitive Programming</div>
+      </div>
+      <div class="lang-card" id="langcard-webdev" onclick="toggleLangInfo('webdev')">
+        <div class="lang-emoji">🌐</div>
+        <div class="lang-name">Web Dev</div>
+        <div class="lang-tagline">HTML + CSS + JS combo</div>
+      </div>
+      <div class="lang-card" id="langcard-dsa" onclick="toggleLangInfo('dsa')">
+        <div class="lang-emoji">🧩</div>
+        <div class="lang-name">DSA / CP</div>
+        <div class="lang-tagline">Placements, FAANG Prep</div>
+      </div>
+    </div>
+
+    <!-- Info drawer appears below the grid -->
+    <div id="lang-drawer-container"></div>
+
+    <div class="error-box" id="lang-error"></div>
+
+    <div class="assessment-nav">
+      <button class="btn-nav" onclick="showScreen('screen-choose')">← Back</button>
+      <button class="btn-nav btn-nav-primary" id="btn-lang-next" onclick="goFromLanguage()" disabled>Generate My Roadmap →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       SCREEN 3 — AI thinking / loading
+  ═══════════════════════════════════════════════ -->
+  <div class="screen" id="screen-loading">
+    <div class="loading-box">
+      <div class="spinner">🔮</div>
+      <div class="loading-title" id="loading-title">Analysing your resume…</div>
+      <div class="loading-sub" id="loading-sub">This takes about 15–20 seconds</div>
+      <div class="loading-steps" id="loading-steps">
+        <div class="loading-step active" id="lstep-1">📖 Reading resume content…</div>
+        <div class="loading-step" id="lstep-2">🧠 Identifying skills & experience…</div>
+        <div class="loading-step" id="lstep-3">🗺️ Mapping knowledge gaps…</div>
+        <div class="loading-step" id="lstep-4">✨ Building your personalised roadmap…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       SCREEN 4 — Roadmap (roadmap.sh style)
+  ═══════════════════════════════════════════════ -->
+  <div class="screen" id="screen-roadmap">
+    <div class="roadmap-header">
+      <div class="roadmap-badge" id="rm-badge">AI-Generated Roadmap</div>
+      <div class="roadmap-title" id="rm-title">Your Learning Path</div>
+      <div class="roadmap-meta" id="rm-meta">Personalised based on your profile</div>
+    </div>
+
+    <!-- Resume summary chips (shown only if resume was analysed) -->
+    <div id="resume-summary-section" style="display:none">
+      <div class="resume-summary">
+        <h3>✦ WHAT AI FOUND IN YOUR RESUME</h3>
+        <div class="summary-chips" id="summary-chips"></div>
+      </div>
+    </div>
+
+    <!-- Roadmap visual -->
+    <div class="roadmap-track" id="roadmap-track"></div>
+
+    <div class="assessment-nav" style="margin-top:3rem">
+      <button class="btn-nav btn-nav-primary" onclick="goToDashboard()">Go to Dashboard →</button>
+    </div>
+  </div>
+
+</div><!-- /max-width wrapper -->
+</div><!-- /container -->
+
+<script>
+// ── Snowflakes ────────────────────────────────────────────────────────────
+const snow = document.getElementById('snow');
+const FLAKES = ['❄','❅','❆','✦','·','*'];
+for (let i = 0; i < 45; i++) {
+  const f = document.createElement('div');
+  f.className = 'flake';
+  f.textContent = FLAKES[Math.floor(Math.random() * FLAKES.length)];
+  f.style.left = Math.random() * 100 + '%';
+  f.style.fontSize = (10 + Math.random() * 18) + 'px';
+  f.style.opacity = 0.3 + Math.random() * 0.5;
+  const dur = 8 + Math.random() * 14;
+  f.style.animationDuration = dur + 's';
+  f.style.animationDelay = -Math.random() * dur + 's';
+  snow.appendChild(f);
+}
+
+// ── State ─────────────────────────────────────────────────────────────────
+let selectedPath = null;   // 'resume' | 'beginner'
+let selectedLang  = null;
+let resumeText    = '';
+let resumeFileName = '';
+
+// ── Screen manager ────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Path selection ────────────────────────────────────────────────────────
+function selectPath(path) {
+  selectedPath = path;
+  document.getElementById('card-resume').classList.toggle('selected', path === 'resume');
+  document.getElementById('card-beginner').classList.toggle('selected', path === 'beginner');
+  document.getElementById('btn-choose-next').disabled = false;
+}
+
+function goFromChoice() {
+  if (!selectedPath) return;
+  if (selectedPath === 'resume') showScreen('screen-resume');
+  else showScreen('screen-languages');
+}
+
+// ── Resume upload / file reading ──────────────────────────────────────────
+function setUploadState(text, hint, hasFile, icon) {
+  document.getElementById('upload-label').textContent = text;
+  document.getElementById('upload-hint').textContent  = hint;
+  document.getElementById('upload-zone').className    = 'upload-zone' + (hasFile ? ' has-file' : '');
+  document.getElementById('upload-icon').textContent  = icon;
+  document.getElementById('btn-analyse').disabled     = !hasFile;
+}
+
+function handleDrag(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('drag-over'); }
+function handleDragLeave(e) { document.getElementById('upload-zone').classList.remove('drag-over'); }
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+}
+
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) processFile(file);
+}
+
+async function processFile(file) {
+  if (file.size > 5 * 1024 * 1024) { showError('resume-error', 'File too large. Max 5 MB.'); return; }
+  resumeFileName = file.name;
+  setUploadState('⏳ Reading file…', 'Extracting text…', false, '📄');
+  try {
+    if (file.type === 'text/plain') {
+      resumeText = await file.text();
+    } else {
+      resumeText = await extractTextFromPDF(file);
+    }
+    if (!resumeText || resumeText.trim().length < 50) {
+      showError('resume-error', 'Could not extract text. Try a plain PDF or TXT file.');
+      setUploadState('Drop your resume here or click to browse', 'Supports PDF, TXT — up to 5 MB', false, '📎');
+      return;
+    }
+    setUploadState('✅ ' + file.name, 'Ready — ' + resumeText.split(/\s+/).length + ' words extracted', true, '📄');
+  } catch(err) {
+    showError('resume-error', 'Failed to read file: ' + err.message);
+    setUploadState('Drop your resume here or click to browse', 'Supports PDF, TXT — up to 5 MB', false, '📎');
+  }
+}
+
+async function extractTextFromPDF(file) {
+  const pdfjsLib = window['pdfjs-dist/build/pdf'];
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  let text = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const tc = await page.getTextContent();
+    text += tc.items.map(it => it.str).join(' ') + '\n';
+  }
+  return text.trim();
+}
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 6000);
+}
+
+// ── Groq AI resume analysis ──────────────────────────────────────────────
+async function startResumeAnalysis() {
+  if (!resumeText) { showError('resume-error', 'Please upload your resume first.'); return; }
+  showScreen('screen-loading');
+  document.getElementById('loading-title').textContent = 'Analysing your resume…';
+  document.getElementById('loading-sub').textContent = 'Reading your skills, projects, and experience';
+  animateLoadingSteps();
+  try {
+    const roadmapData = await callGroq(null, buildResumePrompt(resumeText));
+    renderRoadmap(roadmapData, 'resume');
+    showScreen('screen-roadmap');
+  } catch (err) {
+    showScreen('screen-resume');
+    showError('resume-error', '❌ ' + (err.message || 'AI analysis failed. Check your Groq API key.'));
+  }
+}
+
+function buildResumePrompt(rc) {
+  return `You are a career counsellor AI. Read the resume below and reply with ONLY a JSON object — no explanation, no markdown, no code fences.
+
+The JSON must follow this exact schema:
+{
+  "name": "string",
+  "title": "string — their goal role e.g. Full-Stack Developer",
+  "summary": "string — 2 sentences",
+  "foundSkills": ["string"],
+  "experience": ["string"],
+  "projects": ["string"],
+  "gaps": ["string — 3 to 5 items"],
+  "roadmap": {
+    "phases": [
+      {
+        "phase": "Foundation",
+        "style": "foundation",
+        "nodes": [
+          { "title": "string", "status": "done", "description": "string", "tags": ["string"], "timeEstimate": "string" }
+        ]
+      },
+      { "phase": "Core Skills", "style": "core", "nodes": [ ] },
+      { "phase": "Advanced Topics", "style": "advanced", "nodes": [ ] },
+      { "phase": "Mastery & Portfolio", "style": "mastery", "nodes": [ ] }
+    ]
+  }
+}
+
+Node status values: "done" = person already knows this skill, "focus" = most important to learn next, "upcoming" = learn after focus items.
+Include 3 to 5 nodes per phase. Use skills and tools specific to what is in this resume.
+Do not include any text outside the JSON object.
+
+RESUME:
+${rc.slice(0, 10000)}`;
+}
+
+function buildBeginnerPrompt(lang) {
+  const n = langDetails[lang].name;
+  return `You are a senior developer. Reply with ONLY a JSON object — no explanation, no markdown, no code fences.
+
+The JSON must follow this exact schema for a beginner ${n} learning roadmap:
+{
+  "name": "Student",
+  "title": "Aspiring ${n} Developer",
+  "summary": "string — one sentence about learning ${n} from scratch",
+  "foundSkills": [],
+  "roadmap": {
+    "phases": [
+      {
+        "phase": "Foundation",
+        "style": "foundation",
+        "nodes": [
+          { "title": "string", "status": "focus", "description": "string", "tags": ["string"], "timeEstimate": "string" }
+        ]
+      },
+      { "phase": "Core Skills", "style": "core", "nodes": [ ] },
+      { "phase": "Advanced Topics", "style": "advanced", "nodes": [ ] },
+      { "phase": "Mastery & Portfolio", "style": "mastery", "nodes": [ ] }
+    ]
+  }
+}
+
+Include 3 to 5 nodes per phase. Use "focus" or "upcoming" status only (never "done"). Name real ${n} libraries, tools and frameworks.
+Do not include any text outside the JSON object.`;
+}
+
+function repairJSON(raw) {
+  // Strip markdown fences
+  let s = raw.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
+  // Extract first { ... } block
+  const start = s.indexOf('{');
+  const end = s.lastIndexOf('}');
+  if (start !== -1 && end !== -1) s = s.slice(start, end + 1);
+  // Fix trailing commas before } or ]
+  s = s.replace(/,(\s*[}\]])/g, '$1');
+  // Fix single quotes used instead of double quotes (simple cases)
+  s = s.replace(/'/g, '"');
+  // Remove control characters
+  s = s.replace(/[\x00-\x1F\x7F]/g, ' ');
+  return s;
+}
+
+const GROQ_API_KEY = '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';
+
+async function callGroq(apiKey, prompt) {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_API_KEY },
+    body: JSON.stringify({
+      model: 'llama-3.1-8b-instant',
+      messages: [
+        { role: 'system', content: 'You are a JSON generator. You output only valid JSON objects with no extra text, no markdown, and no code fences.' },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.1,
+      max_tokens: 3000,
+      response_format: { type: 'json_object' }
+    })
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(e?.error?.message || 'Groq API error ' + res.status);
+  }
+  const data = await res.json();
+  const raw = data.choices?.[0]?.message?.content || '';
+  const clean = repairJSON(raw);
+  try {
+    return JSON.parse(clean);
+  } catch(e) {
+    throw new Error('AI returned invalid JSON. Please try again.');
+  }
+}
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 6000);
+}
+
+
+
+// ── Language explorer (beginner path) ────────────────────────────────────
+const langDetails = {
+  python: {
+    name: 'Python', emoji: '🐍',
+    usedFor: 'AI/ML, Data Science, Automation, Web backend (Django/Flask), Scripting',
+    companies: 'Google, Netflix, Instagram, Spotify, NASA',
+    difficulty: 'Beginner-friendly — simple syntax, reads like English',
+    salary: '₹4–18 LPA fresher | $90K–$140K in US',
+    pros: ['Easiest language to learn as a beginner','Huge job market in AI/ML/Data Science','One language for multiple domains','Massive community and libraries (NumPy, Pandas, TensorFlow)'],
+    cons: ['Slower than compiled languages','Not ideal for mobile apps'],
+    roadmap: 'python'
+  },
+  javascript: {
+    name: 'JavaScript', emoji: '⚡',
+    usedFor: 'Web frontend, Web backend (Node.js), Mobile apps (React Native), Desktop apps',
+    companies: 'Facebook, Twitter, LinkedIn, Airbnb, Uber',
+    difficulty: 'Moderate — quirky but powerful once you get it',
+    salary: '₹3–15 LPA fresher | $80K–$130K in US',
+    pros: ['Only language that runs natively in browsers','Full-stack with just one language','Massive ecosystem (React, Vue, Node.js)','Huge demand for web developers globally'],
+    cons: ['Inconsistent behaviour across browsers','Many ways to do the same thing (confusing for beginners)'],
+    roadmap: 'javascript'
+  },
+  java: {
+    name: 'Java', emoji: '☕',
+    usedFor: 'Android apps, Enterprise backend, Banking systems, Spring Boot APIs',
+    companies: 'Amazon, Goldman Sachs, JP Morgan, TCS, Infosys, Wipro',
+    difficulty: 'Moderate to Hard — verbose but very structured',
+    salary: '₹3–20 LPA fresher | $85K–$135K in US',
+    pros: ['Most common language in Indian IT industry','Strong OOP fundamentals','Write once, run anywhere (JVM)','Excellent for FAANG prep with strong typing'],
+    cons: ['Very verbose (lots of boilerplate code)','Slower to write than Python/JS'],
+    roadmap: 'java'
+  },
+  cpp: {
+    name: 'C / C++', emoji: '⚙️',
+    usedFor: 'Competitive programming, Game dev, Operating systems, Embedded systems, High-frequency trading',
+    companies: 'Qualcomm, Microsoft, Adobe, EA Games, Tesla',
+    difficulty: 'Hard — manual memory management, complex syntax',
+    salary: '₹4–18 LPA | Niche but very high-paying roles',
+    pros: ['Best for competitive programming (CP) & FAANG prep','Maximum performance and control','Deep understanding of how computers work','Foundation for learning any other language'],
+    cons: ['Steep learning curve','Easy to make memory bugs','Not used for web or mobile apps'],
+    roadmap: 'cpp'
+  },
+  webdev: {
+    name: 'Web Development', emoji: '🌐',
+    usedFor: 'Building websites, web apps, e-commerce, dashboards — everything you see in a browser',
+    companies: 'Every company has web devs — startups to FAANG',
+    difficulty: 'Beginner-friendly to start, deep to master',
+    salary: '₹3–20 LPA fresher | $70K–$130K in US',
+    pros: ['Fastest path to building visible, shareable projects','Huge demand — every business needs a website','Clear learning path: HTML → CSS → JS → React','Freelancing and remote work opportunities are massive'],
+    cons: ['Constantly evolving (new frameworks every year)','Front-end alone is not enough — need full-stack skills for senior roles'],
+    roadmap: 'webdev'
+  },
+  dsa: {
+    name: 'DSA / Competitive Programming', emoji: '🧩',
+    usedFor: 'Cracking tech interviews, FAANG placements, competitive contests (Codeforces, LeetCode, CodeChef)',
+    companies: 'Google, Amazon, Microsoft, Flipkart, Uber — all top tech companies',
+    difficulty: 'Hard — requires strong problem-solving mindset',
+    salary: 'Not a job itself — but gets you into ₹15–40 LPA roles',
+    pros: ['Required for all product-based company interviews','Teaches you to think algorithmically','Strong DSA = strong software engineer foundation','Respected globally in the CS community'],
+    cons: ['Very time-intensive (months of practice needed)','Not directly used in most day-to-day coding jobs'],
+    roadmap: 'dsa'
+  }
+};
+
+let openLangKey = null;
+
+function toggleLangInfo(key) {
+  const drawer = document.getElementById('lang-drawer-container');
+
+  // If clicking same card — close
+  if (openLangKey === key) {
+    openLangKey = null;
+    selectedLang = null;
+    drawer.innerHTML = '';
+    document.querySelectorAll('.lang-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('btn-lang-next').disabled = true;
+    return;
+  }
+
+  openLangKey = key;
+  selectedLang = key;
+  document.querySelectorAll('.lang-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('langcard-' + key).classList.add('selected');
+  document.getElementById('btn-lang-next').disabled = false;
+
+  const d = langDetails[key];
+  drawer.innerHTML = `
+    <div class="lang-drawer">
+      <div class="lang-drawer-title">${d.emoji} ${d.name} — Full Overview</div>
+      <div class="lang-info-grid">
+        <div class="lang-info-item"><label>📌 Used For</label><span>${d.usedFor}</span></div>
+        <div class="lang-info-item"><label>🏢 Who Uses It</label><span>${d.companies}</span></div>
+        <div class="lang-info-item"><label>📈 Difficulty</label><span>${d.difficulty}</span></div>
+        <div class="lang-info-item"><label>💰 Salary Range</label><span>${d.salary}</span></div>
+      </div>
+      <div class="lang-pros" style="margin-top:1rem">
+        <div style="color:var(--green);font-size:0.82rem;font-weight:600;margin-bottom:0.5rem">✅ Why choose it</div>
+        <ul>${d.pros.map(p => `<li>${p}</li>`).join('')}</ul>
+      </div>
+      <div class="lang-pros" style="margin-top:0.8rem">
+        <div style="color:var(--gold);font-size:0.82rem;font-weight:600;margin-bottom:0.5rem">⚠️ Heads up</div>
+        <ul>${d.cons.map(c => `<li>${c}</li>`).join('')}</ul>
+      </div>
+    </div>`;
+}
+
+function goFromLanguage() {
+  if (!selectedLang) { showError('lang-error', 'Please select a language first.'); return; }
+
+  showScreen('screen-loading');
+  document.getElementById('loading-title').textContent = 'Building your roadmap…';
+  document.getElementById('loading-sub').textContent   = 'Creating a personalised path for ' + langDetails[selectedLang].name;
+  animateLoadingSteps();
+
+  callGroq(null, buildBeginnerPrompt(selectedLang))
+    .then(data => { renderRoadmap(data, 'beginner'); showScreen('screen-roadmap'); })
+    .catch(() => { renderRoadmap(getStaticRoadmap(selectedLang), 'beginner'); showScreen('screen-roadmap'); });
+}
+
+
+
+// ── Static fallback roadmaps ──────────────────────────────────────────────
+function getStaticRoadmap(lang) {
+  const maps = {
+    python: {
+      name:'Student', title:'Python Developer', summary:'Learning Python from the ground up.',
+      foundSkills:[],
+      roadmap:{ phases:[
+        { phase:'Foundation', style:'foundation', nodes:[
+          { title:'Python Basics', status:'focus', description:'Variables, data types, loops, conditionals, functions. Start with Python.org tutorials.', tags:['variables','loops','functions'], timeEstimate:'2–3 weeks' },
+          { title:'Data Structures', status:'focus', description:'Lists, tuples, dictionaries, sets. Learn when to use each.', tags:['list','dict','set'], timeEstimate:'1–2 weeks' },
+          { title:'OOP in Python', status:'upcoming', description:'Classes, objects, inheritance, encapsulation.', tags:['classes','inheritance'], timeEstimate:'2 weeks' },
+        ]},
+        { phase:'Core Skills', style:'core', nodes:[
+          { title:'File I/O & Modules', status:'upcoming', description:'Read/write files, create and import modules, virtual environments.', tags:['os','json','pathlib'], timeEstimate:'1 week' },
+          { title:'Error Handling', status:'upcoming', description:'try/except, custom exceptions, logging.', tags:['try','except','logging'], timeEstimate:'3–4 days' },
+          { title:'Python for Data', status:'upcoming', description:'NumPy basics, Pandas DataFrames, Matplotlib for visualisation.', tags:['numpy','pandas','matplotlib'], timeEstimate:'3–4 weeks' },
+        ]},
+        { phase:'Advanced Topics', style:'advanced', nodes:[
+          { title:'Web Scraping', status:'upcoming', description:'BeautifulSoup, Requests, Scrapy — collect real-world data.', tags:['requests','bs4'], timeEstimate:'1–2 weeks' },
+          { title:'REST APIs with Flask/FastAPI', status:'upcoming', description:'Build your own API endpoints, handle JSON, deploy to the web.', tags:['flask','fastapi','rest'], timeEstimate:'2–3 weeks' },
+          { title:'Intro to Machine Learning', status:'upcoming', description:'scikit-learn, model training, evaluation. Linear regression to neural nets.', tags:['sklearn','tensorflow'], timeEstimate:'4–6 weeks' },
+        ]},
+        { phase:'Mastery & Portfolio', style:'mastery', nodes:[
+          { title:'Capstone Project', status:'upcoming', description:'Build a complete project: data analysis dashboard, ML model, or web scraper with a full pipeline.', tags:['project','portfolio'], timeEstimate:'3–4 weeks' },
+          { title:'Contribute to Open Source', status:'upcoming', description:'Find Python repos on GitHub, fix bugs, add features.', tags:['github','open-source'], timeEstimate:'Ongoing' },
+        ]}
+      ]}
+    },
+    javascript: {
+      name:'Student', title:'JavaScript Developer', summary:'Building towards full-stack web development.',
+      foundSkills:[],
+      roadmap:{ phases:[
+        { phase:'Foundation', style:'foundation', nodes:[
+          { title:'HTML & CSS Basics', status:'focus', description:'Document structure, semantic HTML, CSS box model, flexbox, responsive design.', tags:['html','css','flexbox'], timeEstimate:'2–3 weeks' },
+          { title:'JavaScript Fundamentals', status:'focus', description:'Variables, functions, DOM manipulation, events, arrays, objects.', tags:['js','dom','events'], timeEstimate:'3–4 weeks' },
+          { title:'Modern JS (ES6+)', status:'upcoming', description:'Arrow functions, destructuring, spread, promises, async/await, modules.', tags:['es6','async','modules'], timeEstimate:'2 weeks' },
+        ]},
+        { phase:'Core Skills', style:'core', nodes:[
+          { title:'React.js', status:'upcoming', description:'Components, hooks (useState, useEffect), props, state management.', tags:['react','hooks','jsx'], timeEstimate:'4–6 weeks' },
+          { title:'Node.js & Express', status:'upcoming', description:'Build a REST API, middleware, routing, connect to MongoDB.', tags:['node','express','rest'], timeEstimate:'3–4 weeks' },
+          { title:'Version Control (Git)', status:'upcoming', description:'Git basics, branching, merging, GitHub workflow.', tags:['git','github'], timeEstimate:'1 week' },
+        ]},
+        { phase:'Advanced Topics', style:'advanced', nodes:[
+          { title:'Databases (MongoDB + SQL)', status:'upcoming', description:'CRUD with MongoDB via Mongoose; basic SQL with PostgreSQL.', tags:['mongodb','sql','mongoose'], timeEstimate:'2–3 weeks' },
+          { title:'Auth & Security', status:'upcoming', description:'JWT tokens, bcrypt hashing, OAuth basics, CORS.', tags:['jwt','auth','security'], timeEstimate:'1–2 weeks' },
+          { title:'TypeScript', status:'upcoming', description:'Static typing, interfaces, generics — production-level JS.', tags:['typescript','types'], timeEstimate:'2–3 weeks' },
+        ]},
+        { phase:'Mastery & Portfolio', style:'mastery', nodes:[
+          { title:'Full-Stack App', status:'upcoming', description:'Build a complete app: React frontend + Node/Express backend + MongoDB. Deploy on Vercel/Render.', tags:['fullstack','deploy','portfolio'], timeEstimate:'4–6 weeks' },
+          { title:'Performance & Testing', status:'upcoming', description:'Lighthouse scores, Jest unit tests, React Testing Library.', tags:['testing','jest','performance'], timeEstimate:'2 weeks' },
+        ]}
+      ]}
+    },
+    java: {
+      name:'Student', title:'Java Backend Developer', summary:'Learning Java for enterprise and Android development.',
+      foundSkills:[],
+      roadmap:{ phases:[
+        { phase:'Foundation', style:'foundation', nodes:[
+          { title:'Java Basics', status:'focus', description:'Syntax, data types, control flow, methods, arrays. Set up IntelliJ IDEA.', tags:['java','syntax','oop'], timeEstimate:'3–4 weeks' },
+          { title:'Object-Oriented Programming', status:'focus', description:'Classes, inheritance, polymorphism, interfaces, abstract classes.', tags:['oop','inheritance','interface'], timeEstimate:'2–3 weeks' },
+          { title:'Collections Framework', status:'upcoming', description:'ArrayList, HashMap, LinkedList, TreeMap, iterators.', tags:['collections','generics'], timeEstimate:'1–2 weeks' },
+        ]},
+        { phase:'Core Skills', style:'core', nodes:[
+          { title:'Exception Handling & I/O', status:'upcoming', description:'try/catch/finally, custom exceptions, file handling with java.io.', tags:['exceptions','io'], timeEstimate:'1 week' },
+          { title:'Java 8+ Features', status:'upcoming', description:'Lambdas, Streams API, Optional, functional interfaces.', tags:['lambda','streams','java8'], timeEstimate:'2 weeks' },
+          { title:'Spring Boot', status:'upcoming', description:'REST APIs with Spring Boot, Spring MVC, dependency injection.', tags:['spring','rest','di'], timeEstimate:'4–6 weeks' },
+        ]},
+        { phase:'Advanced Topics', style:'advanced', nodes:[
+          { title:'Database with JPA/Hibernate', status:'upcoming', description:'ORM mapping, CRUD with Spring Data JPA, MySQL/PostgreSQL.', tags:['jpa','hibernate','sql'], timeEstimate:'2–3 weeks' },
+          { title:'Multithreading & Concurrency', status:'upcoming', description:'Threads, ExecutorService, synchronized, CompletableFuture.', tags:['threads','concurrency'], timeEstimate:'2 weeks' },
+          { title:'Design Patterns', status:'upcoming', description:'Singleton, Factory, Observer, Strategy — write clean, maintainable Java.', tags:['patterns','design'], timeEstimate:'2–3 weeks' },
+        ]},
+        { phase:'Mastery & Portfolio', style:'mastery', nodes:[
+          { title:'Full REST API Project', status:'upcoming', description:'Build a complete Spring Boot app with auth, database, and Docker deployment.', tags:['springboot','docker','portfolio'], timeEstimate:'4–5 weeks' },
+          { title:'DSA in Java for Interviews', status:'upcoming', description:'LeetCode problems in Java — arrays, strings, trees, graphs.', tags:['dsa','leetcode','interviews'], timeEstimate:'Ongoing' },
+        ]}
+      ]}
+    },
+    cpp: {
+      name:'Student', title:'C++ / Competitive Programmer', summary:'Mastering C++ for systems programming and competitive programming.',
+      foundSkills:[],
+      roadmap:{ phases:[
+        { phase:'Foundation', style:'foundation', nodes:[
+          { title:'C Basics', status:'focus', description:'Pointers, memory management, arrays, strings, structs. Understand how memory works.', tags:['c','pointers','memory'], timeEstimate:'3–4 weeks' },
+          { title:'C++ Fundamentals', status:'focus', description:'Classes, objects, constructors, RAII, references vs pointers.', tags:['cpp','classes','oop'], timeEstimate:'2–3 weeks' },
+          { title:'STL Basics', status:'upcoming', description:'vector, map, set, queue, stack, pair — your CP toolkit.', tags:['stl','vector','map'], timeEstimate:'1–2 weeks' },
+        ]},
+        { phase:'Core Skills', style:'core', nodes:[
+          { title:'Algorithms: Sorting & Searching', status:'upcoming', description:'Binary search, merge sort, quick sort — implement from scratch.', tags:['algorithms','binary-search','sorting'], timeEstimate:'2 weeks' },
+          { title:'Recursion & Backtracking', status:'upcoming', description:'Recursive thinking, subset generation, permutations, N-Queens.', tags:['recursion','backtracking'], timeEstimate:'2–3 weeks' },
+          { title:'Dynamic Programming Basics', status:'upcoming', description:'Memoisation, tabulation, knapsack, LIS, LCS.', tags:['dp','memoisation'], timeEstimate:'3–4 weeks' },
+        ]},
+        { phase:'Advanced Topics', style:'advanced', nodes:[
+          { title:'Graph Algorithms', status:'upcoming', description:'BFS, DFS, Dijkstra, Floyd-Warshall, topological sort, union-find.', tags:['graphs','dijkstra','bfs'], timeEstimate:'3–4 weeks' },
+          { title:'Advanced Data Structures', status:'upcoming', description:'Segment trees, Fenwick trees, tries, disjoint sets.', tags:['segment-tree','trie'], timeEstimate:'3–4 weeks' },
+          { title:'Number Theory & Math', status:'upcoming', description:'Prime sieve, modular arithmetic, combinatorics, GCD/LCM.', tags:['math','primes','modular'], timeEstimate:'2 weeks' },
+        ]},
+        { phase:'Mastery & Portfolio', style:'mastery', nodes:[
+          { title:'Contest Practice', status:'upcoming', description:'Participate in Codeforces Div. 3/4, CodeChef Long Challenges weekly.', tags:['codeforces','codechef','contests'], timeEstimate:'Ongoing' },
+          { title:'LeetCode for Placements', status:'upcoming', description:'250+ problems across arrays, trees, graphs, DP. Aim for 150 medium+.', tags:['leetcode','interviews','faang'], timeEstimate:'3–6 months' },
+        ]}
+      ]}
+    },
+    webdev: {
+      name:'Student', title:'Full-Stack Web Developer', summary:'Building modern web applications from the ground up.',
+      foundSkills:[],
+      roadmap:{ phases:[
+        { phase:'Foundation', style:'foundation', nodes:[
+          { title:'HTML5 Semantics', status:'focus', description:'Semantic tags, forms, accessibility basics, SEO-friendly markup.', tags:['html5','semantic','forms'], timeEstimate:'1–2 weeks' },
+          { title:'CSS3 & Responsive Design', status:'focus', description:'Flexbox, Grid, media queries, CSS variables, animations.', tags:['css3','flexbox','grid','responsive'], timeEstimate:'2–3 weeks' },
+          { title:'JavaScript DOM', status:'focus', description:'DOM manipulation, events, fetch API, local storage, ES6+.', tags:['javascript','dom','fetch'], timeEstimate:'3–4 weeks' },
+        ]},
+        { phase:'Core Skills', style:'core', nodes:[
+          { title:'React.js', status:'upcoming', description:'Component architecture, hooks, props, state, React Router.', tags:['react','hooks','spa'], timeEstimate:'4–6 weeks' },
+          { title:'CSS Framework', status:'upcoming', description:'Tailwind CSS for rapid UI development. Bootstrap as fallback.', tags:['tailwind','bootstrap'], timeEstimate:'1–2 weeks' },
+          { title:'Backend with Node.js', status:'upcoming', description:'Express.js, REST APIs, middleware, MVC architecture.', tags:['node','express','rest'], timeEstimate:'3–4 weeks' },
+        ]},
+        { phase:'Advanced Topics', style:'advanced', nodes:[
+          { title:'Database Integration', status:'upcoming', description:'MongoDB with Mongoose for NoSQL; PostgreSQL basics for SQL.', tags:['mongodb','postgresql'], timeEstimate:'2–3 weeks' },
+          { title:'Auth & Deployment', status:'upcoming', description:'JWT auth, bcrypt, deploy to Vercel (frontend) + Railway (backend).', tags:['auth','vercel','deploy'], timeEstimate:'1–2 weeks' },
+          { title:'Next.js (Full-Stack)', status:'upcoming', description:'SSR, SSG, API routes, image optimisation — production-ready React.', tags:['nextjs','ssr','seo'], timeEstimate:'3–4 weeks' },
+        ]},
+        { phase:'Mastery & Portfolio', style:'mastery', nodes:[
+          { title:'3 Portfolio Projects', status:'upcoming', description:'Build: 1) Portfolio site, 2) Full-stack CRUD app, 3) Real-time app with WebSockets.', tags:['portfolio','projects'], timeEstimate:'6–8 weeks' },
+          { title:'Open Source & Freelancing', status:'upcoming', description:'Contribute to open source, apply to Upwork/Fiverr for first freelance projects.', tags:['freelance','open-source'], timeEstimate:'Ongoing' },
+        ]}
+      ]}
+    },
+    dsa: {
+      name:'Student', title:'Competitive Programmer', summary:'Mastering DSA for FAANG placements and competitive programming.',
+      foundSkills:[],
+      roadmap:{ phases:[
+        { phase:'Foundation', style:'foundation', nodes:[
+          { title:'Pick a Language', status:'focus', description:'C++ (recommended for CP) or Java/Python. Learn its standard library thoroughly.', tags:['cpp','java','python'], timeEstimate:'2–4 weeks' },
+          { title:'Arrays & Strings', status:'focus', description:'Two pointers, sliding window, prefix sums, string manipulation.', tags:['arrays','strings','two-pointers'], timeEstimate:'2–3 weeks' },
+          { title:'Recursion & Sorting', status:'upcoming', description:'Merge sort, quick sort, recursion trees, master theorem.', tags:['recursion','sorting'], timeEstimate:'2 weeks' },
+        ]},
+        { phase:'Core Skills', style:'core', nodes:[
+          { title:'Linked Lists, Stacks, Queues', status:'upcoming', description:'Implement from scratch. Reverse, detect cycle, merge.', tags:['linkedlist','stack','queue'], timeEstimate:'2 weeks' },
+          { title:'Trees & BST', status:'upcoming', description:'Binary trees, BST operations, DFS/BFS traversal, lowest common ancestor.', tags:['trees','bst','dfs'], timeEstimate:'3 weeks' },
+          { title:'Hashing & Heaps', status:'upcoming', description:'HashMap patterns, sliding window with freq map, min/max heap, top-K problems.', tags:['hashmap','heap','topk'], timeEstimate:'2 weeks' },
+        ]},
+        { phase:'Advanced Topics', style:'advanced', nodes:[
+          { title:'Graph Theory', status:'upcoming', description:'BFS/DFS, Dijkstra, Bellman-Ford, union-find, topological sort, SCC.', tags:['graphs','bfs','dijkstra'], timeEstimate:'3–4 weeks' },
+          { title:'Dynamic Programming', status:'upcoming', description:'DP on arrays, strings, trees. 1D→2D→interval DP. Knapsack, LCS, LIS.', tags:['dp','knapsack','lis'], timeEstimate:'4–6 weeks' },
+          { title:'Advanced DS (Segment Trees etc)', status:'upcoming', description:'Segment trees, Fenwick trees, tries, sparse table.', tags:['segment-tree','fenwick','trie'], timeEstimate:'3–4 weeks' },
+        ]},
+        { phase:'Mastery & Portfolio', style:'mastery', nodes:[
+          { title:'150+ LeetCode Medium', status:'upcoming', description:'Solve 150+ medium problems. Track in a spreadsheet. Focus on patterns not solutions.', tags:['leetcode','medium','patterns'], timeEstimate:'3–4 months' },
+          { title:'Mock Interviews', status:'upcoming', description:'Pramp, Interviewing.io, Codeforces virtual contests. Time yourself strictly.', tags:['mock','interviews','pramp'], timeEstimate:'Ongoing' },
+        ]}
+      ]}
+    }
+  };
+  return maps[lang] || maps.python;
+}
+
+// ── Loading animation ─────────────────────────────────────────────────────
+function animateLoadingSteps() {
+  const steps = [1,2,3,4];
+  steps.forEach(i => document.getElementById('lstep-' + i).className = 'loading-step');
+  let i = 0;
+  const interval = setInterval(() => {
+    if (i > 0) document.getElementById('lstep-' + i).className = 'loading-step done';
+    i++;
+    if (i <= 4) document.getElementById('lstep-' + i).className = 'loading-step active';
+    else clearInterval(interval);
+  }, 900);
+}
+
+// ── Render roadmap ────────────────────────────────────────────────────────
+function renderRoadmap(data, source) {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  document.getElementById('rm-badge').textContent = source === 'resume'
+    ? '✨ AI-Analysed from Your Resume'
+    : '🗺️ Personalised Beginner Roadmap';
+  document.getElementById('rm-title').textContent = data.title || 'Your Learning Path';
+  document.getElementById('rm-meta').textContent  = (data.summary || '') + (data.foundSkills?.length ? ` · ${data.foundSkills.length} skills detected` : '');
+
+  // Resume summary chips
+  if (source === 'resume' && data.foundSkills?.length) {
+    document.getElementById('resume-summary-section').style.display = 'block';
+    const chips = document.getElementById('summary-chips');
+    chips.innerHTML = '';
+    [...(data.foundSkills || []), ...(data.projects?.slice(0,3).map(p => '📁 ' + p) || []),
+      ...(data.gaps?.slice(0,3).map(g => '⬆️ ' + g) || [])
+    ].forEach(item => {
+      const chip = document.createElement('span');
+      chip.className = 'summary-chip';
+      chip.textContent = item;
+      chips.appendChild(chip);
+    });
+  }
+
+  // Build roadmap track
+  const track = document.getElementById('roadmap-track');
+  track.innerHTML = '';
+
+  const phaseStyles = { foundation:'phase-foundation', core:'phase-core', advanced:'phase-advanced', mastery:'phase-mastery' };
+
+  (data.roadmap?.phases || []).forEach(phase => {
+    const phaseEl = document.createElement('div');
+    phaseEl.className = 'roadmap-phase';
+
+    const styleClass = phaseStyles[phase.style] || 'phase-core';
+    phaseEl.innerHTML = `<div class="phase-label"><span class="phase-badge ${styleClass}">${phase.phase}</span></div>`;
+
+    const nodes = document.createElement('div');
+    nodes.className = 'roadmap-nodes';
+
+    (phase.nodes || []).forEach((node, idx) => {
+      const nodeEl = document.createElement('div');
+      nodeEl.className = 'roadmap-node';
+
+      const cardClass = node.status === 'done' ? 'node-done' : node.status === 'focus' ? 'node-focus' : 'node-future';
+      const dotClass  = node.status === 'done' ? 'done' : node.status === 'focus' ? 'focus' : 'future';
+      const statusLabel = node.status === 'done' ? 'Already Known' : node.status === 'focus' ? '▶ Focus Next' : 'Upcoming';
+      const statusClass = node.status === 'done' ? 'status-done' : node.status === 'focus' ? 'status-focus' : 'status-upcoming';
+
+      const tagsHtml = (node.tags || []).map(t => `<span class="node-tag">${t}</span>`).join('');
+
+      nodeEl.innerHTML = `
+        <div class="node-spacer"></div>
+        <div class="node-connector"><div class="node-dot ${dotClass}"></div></div>
+        <div class="node-card ${cardClass}">
+          <div class="node-card-top">
+            <div class="node-title">${node.title}</div>
+            <span class="node-status ${statusClass}">${statusLabel}</span>
+          </div>
+          <div class="node-desc">${node.description}</div>
+          ${tagsHtml ? `<div class="node-tags">${tagsHtml}</div>` : ''}
+          ${node.timeEstimate ? `<div class="node-time">⏱ ${node.timeEstimate}</div>` : ''}
+        </div>`;
+      nodes.appendChild(nodeEl);
+    });
+
+    phaseEl.appendChild(nodes);
+    track.appendChild(phaseEl);
+  });
+
+  // Save roadmap to user profile in localStorage
+  user.roadmap = data;
+  user.roadmapSource = source;
+  user.assessmentComplete = true;
+  user.onboardingComplete = true;
+  localStorage.setItem('user', JSON.stringify(user));
+}
+
+// ── Go to dashboard ───────────────────────────────────────────────────────
+function goToDashboard() {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (user.role === 'institution') window.location.href = 'dashboard-institution.html';
+  else window.location.href = 'dashboard-user.html';
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
+</body>
+</html>

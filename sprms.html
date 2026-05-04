@@ -1,0 +1,1901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillBridge — Complete Placement System</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Jost:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #faf8f5;
+    --deep: #f5f0ea;
+    --mid: #ede6dc;
+    --panel: #f9f6f1;
+    --border: rgba(139,90,60,0.15);
+    --ice: #8b5a3c;
+    --frost: #3d2314;
+    --glow: #b5663a;
+    --accent: #c97b4b;
+    --gold: #8b5a3c;
+    --green: #6b7c5c;
+    --red: #c0392b;
+    --text: #3d2314;
+    --muted: rgba(93,60,40,0.6);
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --sans: 'Jost', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--navy);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #snow { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .flake { position: absolute; top: -20px; color: rgba(174,224,255,0.3); font-size: 14px; animation: fall linear infinite; user-select: none; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(360deg); opacity: 0; } }
+
+  .aurora { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse 80% 50% at 20% 10%, rgba(181,102,58,0.06) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(201,123,75,0.04) 0%, transparent 50%); }
+
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 1rem 2rem;
+    background: rgba(250,248,245,0.97);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(16px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+
+  .header-left { display: flex; align-items: center; gap: 1rem; }
+  .logo-mark { width: 40px; height: 40px; border: 2px solid var(--glow); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: var(--glow); font-size: 1.3rem; }
+  .logo-text { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; letter-spacing: 0.05em; }
+
+  nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .nav-btn { background: none; border: none; padding: 6px 14px; border-radius: 6px; color: var(--muted); cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: all 0.2s; }
+  .nav-btn:hover { color: var(--text); background: rgba(181,102,58,0.08); }
+  .nav-btn.active { color: var(--glow); background: rgba(181,102,58,0.14); }
+
+  .header-right { display: flex; gap: 1rem; align-items: center; }
+  .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; background: linear-gradient(135deg, var(--glow), var(--accent)); color: #faf8f5; transition: all 0.2s; font-size: 0.8rem; }
+  .btn:hover { transform: translateY(-2px); opacity: 0.9; }
+
+  .container { display: flex; flex: 1; position: relative; z-index: 1; }
+
+  aside {
+    width: 240px;
+    background: rgba(237,230,220,0.6);
+    border-right: 1px solid var(--border);
+    padding: 1.5rem 0;
+    overflow-y: auto;
+    position: sticky;
+    top: 0;
+    height: calc(100vh - 70px);
+  }
+
+  .sidebar-group { padding: 0 1rem; margin-bottom: 1.5rem; }
+  .sidebar-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.5rem; padding: 0 0.5rem; }
+  .sidebar-item { padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; color: var(--muted); transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
+  .sidebar-item:hover { background: rgba(181,102,58,0.08); color: var(--text); }
+  .sidebar-item.active { background: rgba(181,102,58,0.14); color: var(--glow); }
+
+  main { flex: 1; padding: 2rem; overflow-y: auto; max-height: calc(100vh - 70px); }
+
+  .tab { display: none; }
+  .tab.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .page-title { margin-bottom: 2rem; }
+  .page-title h1 { font-family: 'Playfair Display', serif; font-size: 2.2rem; font-weight: 900; background: linear-gradient(135deg, #ceeeff 0%, var(--glow) 60%, var(--accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.5rem; }
+  .page-title p { color: var(--muted); font-size: 0.9rem; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+  .col-span-2 { grid-column: span 2; }
+
+  .card {
+    background: linear-gradient(135deg, var(--mid) 0%, var(--panel) 100%);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.6rem;
+    transition: all 0.3s;
+  }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(181,102,58,0.12); }
+
+  .card-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: #ceeeff; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+  .stat-box { text-align: center; }
+  .stat-val { font-family: 'Playfair Display', serif; font-size: 2.8rem; font-weight: 900; color: var(--glow); }
+  .stat-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-top: 4px; }
+
+  .progress-bar { height: 8px; background: var(--mid); border-radius: 4px; overflow: hidden; margin: 0.5rem 0; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--glow), var(--accent)); }
+
+  .job-card, .interview-card, .internship-card {
+    background: var(--deep);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .job-title { font-weight: 600; color: var(--frost); margin-bottom: 0.4rem; font-size: 1rem; }
+  .job-company { font-size: 0.85rem; color: var(--glow); margin-bottom: 0.6rem; }
+  .job-details { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.6rem; }
+
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin: 2px 2px 2px 0;
+    background: rgba(79,255,176,0.13);
+    color: var(--green);
+  }
+
+  .tag-blue { background: rgba(181,102,58,0.13); color: var(--glow); }
+  .tag-gold { background: rgba(255,216,122,0.13); color: var(--gold); }
+  .tag-red { background: rgba(255,107,138,0.13); color: var(--red); }
+
+  .timeline { position: relative; padding-left: 2rem; }
+  .timeline-item { margin-bottom: 1.5rem; position: relative; }
+  .timeline-item:before { content: ''; position: absolute; left: -2rem; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--glow); }
+  .timeline-item h4 { font-weight: 600; color: #ceeeff; margin-bottom: 0.3rem; }
+  .timeline-item p { font-size: 0.85rem; color: var(--muted); }
+
+  .chart { background: var(--deep); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-top: 1rem; }
+
+  .skill-bar { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+  .skill-name { min-width: 100px; font-size: 0.85rem; color: var(--text); }
+  .skill-track { flex: 1; height: 6px; background: var(--mid); border-radius: 3px; overflow: hidden; }
+  .skill-fill { height: 100%; background: linear-gradient(90deg, var(--glow), var(--accent)); }
+
+  .notification { background: rgba(79,255,176,0.1); border-left: 3px solid var(--green); padding: 1rem; border-radius: 6px; margin-bottom: 1rem; }
+  .notification.warning { background: rgba(255,216,122,0.1); border-left-color: var(--gold); }
+  .notification.info { background: rgba(181,102,58,0.1); border-left-color: var(--glow); }
+
+  @media (max-width: 900px) {
+    .container { flex-direction: column; }
+    aside { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border); padding: 1rem; display: flex; gap: 1rem; overflow-x: auto; }
+    .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+    main { max-height: none; }
+  }
+
+  @media (max-width: 640px) {
+    header { flex-direction: column; gap: 1rem; }
+    nav { width: 100%; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .col-span-2 { grid-column: span 1; }
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--deep); }
+  ::-webkit-scrollbar-thumb { background: rgba(181,102,58,0.25); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div id="snow"></div>
+<div class="aurora"></div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <div class="logo-mark">S</div>
+    <div class="logo-text">SkillBridge</div>
+  </div>
+  <nav>
+    <button class="nav-btn active" onclick="switchTab('overview', this)">📊 Overview</button>
+    <button class="nav-btn" onclick="switchTab('jobs', this)">💼 Jobs</button>
+    <button class="nav-btn" onclick="switchTab('interviews', this)">🎯 Interviews</button>
+    <button class="nav-btn" onclick="switchTab('internships', this)">🏢 Internships</button>
+    <button class="nav-btn" onclick="switchTab('skills', this)">⚡ Skills</button>
+    <button class="nav-btn" onclick="switchTab('dsa', this)">🔧 DSA</button>
+  </nav>
+  <div class="header-right">
+    <span style="font-size:0.85rem" id="user-display"></span>
+    <button class="btn" onclick="handleLogout()">🚪 Logout</button>
+  </div>
+</header>
+
+<!-- MAIN CONTAINER -->
+<div class="container">
+
+  <!-- SIDEBAR -->
+  <aside>
+    <div class="sidebar-group">
+      <div class="sidebar-label">📌 Main</div>
+      <div class="sidebar-item active" onclick="switchTab('overview')">📊 Dashboard</div>
+      <div class="sidebar-item" onclick="switchTab('jobs')">💼 Job Matches</div>
+      <div class="sidebar-item" onclick="switchTab('interviews')">🎯 Interviews</div>
+      <div class="sidebar-item" onclick="switchTab('internships')">🏢 Internships</div>
+    </div>
+    <div class="sidebar-group">
+      <div class="sidebar-label">📚 Learning</div>
+      <div class="sidebar-item" onclick="switchTab('skills')">⚡ Skills</div>
+      <div class="sidebar-item" onclick="switchTab('dsa')">🔧 DSA Engine</div>
+    </div>
+    <div class="sidebar-group">
+      <div class="sidebar-label">🔗 Platform</div>
+      <div class="sidebar-item" onclick="location.href='dashboard-user.html'">👤 Profile</div>
+      <div class="sidebar-item" onclick="location.href='courses.html'">📖 Courses</div>
+      <div class="sidebar-item" onclick="location.href='jobs.html'">🏆 All Jobs</div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main>
+
+    <!-- TAB 1: OVERVIEW -->
+    <div class="tab active" id="tab-overview">
+      <div class="page-title">
+        <h1>📊 Placement Dashboard</h1>
+        <p>Your comprehensive placement readiness hub with AI-powered job matching & career insights</p>
+      </div>
+
+      <div class="grid-4" style="margin-bottom: 1.5rem;">
+        <div class="card">
+          <div class="stat-box">
+            <div class="stat-val">82.4</div>
+            <div class="stat-label">Readiness Score</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="stat-box">
+            <div class="stat-val">#4</div>
+            <div class="stat-label">Your Rank</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="stat-box">
+            <div class="stat-val">9</div>
+            <div class="stat-label">Key Skills</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="stat-box">
+            <div class="stat-val">12</div>
+            <div class="stat-label">Jobs Matched</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom: 1.5rem;">
+        <div class="card">
+          <div class="card-title">🎯 Placement Pipeline Status</div>
+          <div class="timeline">
+            <div class="timeline-item">
+              <h4>✅ Resume Screening</h4>
+              <p>Passed - 12 companies (Updated 2 days ago)</p>
+            </div>
+            <div class="timeline-item">
+              <h4>⏳ Technical Round</h4>
+              <p>In Progress - Google, Microsoft (Scheduled this week)</p>
+            </div>
+            <div class="timeline-item">
+              <h4>⏳ HR Round</h4>
+              <p>Amazon call next week</p>
+            </div>
+            <div class="timeline-item">
+              <h4>🎁 Offers</h4>
+              <p>Pending - awaiting decisions</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📈 Performance Trends</div>
+          <div class="chart">
+            <div style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem">Last 30 Days Progress</div>
+            <div class="skill-bar">
+              <span class="skill-name">DSA</span>
+              <div class="skill-track"><div class="skill-fill" style="width:85%"></div></div>
+              <span style="font-size:0.8rem">85%</span>
+            </div>
+            <div class="skill-bar">
+              <span class="skill-name">System Design</span>
+              <div class="skill-track"><div class="skill-fill" style="width:72%"></div></div>
+              <span style="font-size:0.8rem">72%</span>
+            </div>
+            <div class="skill-bar">
+              <span class="skill-name">DBMS</span>
+              <div class="skill-track"><div class="skill-fill" style="width:78%"></div></div>
+              <span style="font-size:0.8rem">78%</span>
+            </div>
+            <div class="skill-bar">
+              <span class="skill-name">Communication</span>
+              <div class="skill-track"><div class="skill-fill" style="width:81%"></div></div>
+              <span style="font-size:0.8rem">81%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">🎯 Next Steps</div>
+          <div class="notification info">
+            <div style="font-weight:600">Complete System Design Module (2/5 topics)</div>
+            <div style="font-size:0.85rem;color:var(--text);margin-top:0.5rem">You're 40% through. Expected completion: 3 days</div>
+          </div>
+          <div class="notification warning">
+            <div style="font-weight:600">Mock Interview with Google - Thursday</div>
+            <div style="font-size:0.85rem;color:var(--text);margin-top:0.5rem">Practice DSA & System Design problems</div>
+          </div>
+          <div class="notification">
+            <div style="font-weight:600">Apply to 3 New Companies</div>
+            <div style="font-size:0.85rem;color:var(--text);margin-top:0.5rem">Your match score: 90%+</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🌟 Smart Recommendations</div>
+          <div style="font-size:0.85rem;line-height:1.8">
+            <div class="notification warning" style="margin-bottom:1rem">
+              <span class="tag tag-gold">Action:</span> Strengthen DBMS concepts with 2-3 more topics. Your DSA is strong!
+            </div>
+            <div class="notification" style="margin-bottom:1rem">
+              <span class="tag tag-green">Opportunity:</span> You're ranked #4 - eligible for top 10 company programs
+            </div>
+            <div class="notification info">
+              <span class="tag tag-blue">Alert:</span> 3 new companies added to your match list today
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: JOBS -->
+    <div class="tab" id="tab-jobs">
+      <div class="page-title">
+        <h1>💼 AI-Powered Job Matches</h1>
+        <p>Personalized job recommendations based on your skills & preferences (Match Score: 82-94%)</p>
+      </div>
+
+      <div style="margin-bottom:1.5rem">
+        <div class="job-card">
+          <div style="display:flex;justify-content:space-between;align-items:start">
+            <div>
+              <div class="job-title">Senior Software Engineer</div>
+              <div class="job-company">Google • Mountain View, CA</div>
+              <div class="job-details">📍 Full-Time • 💰 $180K-$220K • ⭐ Match: 94%</div>
+            </div>
+            <span class="tag tag-gold" style="background:rgba(255,216,122,0.2)">HOT</span>
+          </div>
+          <div style="margin:1rem 0">
+            <span class="tag tag-gold">DSA</span>
+            <span class="tag tag-gold">System Design</span>
+            <span class="tag tag-gold">Java</span>
+            <span class="tag tag-gold">Distributed Systems</span>
+          </div>
+          <button class="btn" style="width:100%;margin-top:1rem">🚀 Apply Now →</button>
+        </div>
+
+        <div class="job-card">
+          <div style="display:flex;justify-content:space-between;align-items:start">
+            <div>
+              <div class="job-title">Full Stack Developer</div>
+              <div class="job-company">Microsoft • Seattle, WA</div>
+              <div class="job-details">📍 Full-Time • 💰 $160K-$200K • ⭐ Match: 88%</div>
+            </div>
+            <span class="tag tag-blue">NEW</span>
+          </div>
+          <div style="margin:1rem 0">
+            <span class="tag tag-blue">React</span>
+            <span class="tag tag-blue">Node.js</span>
+            <span class="tag tag-gold">SQL</span>
+            <span class="tag">Azure</span>
+          </div>
+          <button class="btn" style="width:100%;margin-top:1rem">🚀 Apply Now →</button>
+        </div>
+
+        <div class="job-card">
+          <div class="job-title">Data Scientist</div>
+          <div class="job-company">Amazon • Seattle, WA</div>
+          <div class="job-details">📍 Full-Time • 💰 $170K-$210K • ⭐ Match: 85%</div>
+          <div style="margin:1rem 0">
+            <span class="tag tag-green">Python</span>
+            <span class="tag tag-green">ML</span>
+            <span class="tag tag-gold">SQL</span>
+            <span class="tag">Statistics</span>
+          </div>
+          <button class="btn" style="width:100%;margin-top:1rem">🚀 Apply Now →</button>
+        </div>
+
+        <div class="job-card">
+          <div class="job-title">DevOps Engineer</div>
+          <div class="job-company">Meta • Menlo Park, CA</div>
+          <div class="job-details">📍 Full-Time • 💰 $150K-$190K • ⭐ Match: 82%</div>
+          <div style="margin:1rem 0">
+            <span class="tag">Docker</span>
+            <span class="tag">Kubernetes</span>
+            <span class="tag">AWS</span>
+            <span class="tag tag-gold">Linux</span>
+          </div>
+          <button class="btn" style="width:100%;margin-top:1rem">🚀 Apply Now →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: INTERVIEWS -->
+    <div class="tab" id="tab-interviews">
+      <div class="page-title">
+        <h1>🎯 Interview Preparation Hub</h1>
+        <p>Track interviews, access resources, and master your rounds</p>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:1.5rem">
+        <div class="card">
+          <div class="card-title">📅 Upcoming Interviews</div>
+          <div class="interview-card">
+            <div class="job-title">Google - Technical Round 1</div>
+            <div class="job-company">📅 Thursday, April 25 • 10:00 AM IST</div>
+            <div class="job-details">📹 Google Meet • ⏱️ 90 minutes • 💻 Virtual</div>
+            <div style="margin:1rem 0">
+              <span class="tag tag-gold">Focus: DSA</span>
+              <span class="tag tag-gold">Trees & Graphs</span>
+            </div>
+            <button class="btn" style="width:100%">📝 Prep Guide</button>
+            <button class="btn" style="width:100%;margin-top:0.5rem;background:rgba(79,255,176,0.2);color:var(--green)">📊 See Previous Questions</button>
+          </div>
+
+          <div class="interview-card">
+            <div class="job-title">Microsoft - System Design</div>
+            <div class="job-company">📅 Monday, April 28 • 2:00 PM IST</div>
+            <div class="job-details">📹 Teams Call • ⏱️ 60 minutes • 💻 Whiteboard</div>
+            <div style="margin:1rem 0">
+              <span class="tag tag-green">Focus: Architecture</span>
+              <span class="tag tag-green">Scalability</span>
+            </div>
+            <button class="btn" style="width:100%">📝 Prep Guide</button>
+          </div>
+
+          <div class="interview-card">
+            <div class="job-title">Amazon - HR Round</div>
+            <div class="job-company">📅 Wednesday, May 1 • 3:30 PM IST</div>
+            <div class="job-details">📞 Phone Call • ⏱️ 45 minutes • 💬 Behavioral</div>
+            <div style="margin:1rem 0">
+              <span class="tag">STAR Method</span>
+              <span class="tag">Leadership</span>
+            </div>
+            <button class="btn" style="width:100%">📝 Prep Guide</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📚 Interview Resources</div>
+          <div style="margin-bottom:1.5rem;padding:1rem;background:rgba(181,102,58,0.1);border-radius:8px">
+            <h4 style="color:var(--glow);margin-bottom:0.5rem">📖 DSA Questions Bank</h4>
+            <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem">500+ LeetCode-style problems with video solutions</p>
+            <button class="btn" style="width:100%;font-size:0.85rem">Access Now →</button>
+          </div>
+          <div style="margin-bottom:1.5rem;padding:1rem;background:rgba(79,255,176,0.1);border-radius:8px">
+            <h4 style="color:var(--green);margin-bottom:0.5rem">🎓 System Design Course</h4>
+            <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem">20 hours video + 10 case studies with solutions</p>
+            <button class="btn" style="width:100%;font-size:0.85rem">Enroll Free →</button>
+          </div>
+          <div style="padding:1rem;background:rgba(255,216,122,0.1);border-radius:8px">
+            <h4 style="color:var(--gold);margin-bottom:0.5rem">👥 Mock Interview Sessions</h4>
+            <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem">1-on-1 practice with experienced mentors</p>
+            <button class="btn" style="width:100%;font-size:0.85rem">Book Session →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: INTERNSHIPS -->
+    <div class="tab" id="tab-internships">
+      <div class="page-title">
+        <h1>🏢 Internship Opportunities</h1>
+        <p>Summer & semester internships matching your profile</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="internship-card">
+          <div class="job-title">🚀 Frontend Engineering Internship</div>
+          <div class="job-company">Startup XYZ (Series B) • Remote</div>
+          <div class="job-details">🔗 3-6 months • 💰 ₹30K/month • 📍 Open Now</div>
+          <div style="margin:1rem 0">
+            <span class="tag tag-blue">React</span>
+            <span class="tag tag-blue">TypeScript</span>
+            <span class="tag">Tailwind CSS</span>
+          </div>
+          <div style="font-size:0.8rem;color:var(--muted);margin:0.8rem 0">Pre-placement offer likely • Previous interns: 3/4 converted</div>
+          <button class="btn" style="width:100%">🚀 Apply →</button>
+        </div>
+
+        <div class="internship-card">
+          <div class="job-title">⚙️ Backend Engineering Internship</div>
+          <div class="job-company">Tech Corp • Bangalore</div>
+          <div class="job-details">🔗 6 months • 💰 ₹40K/month • 📍 Open Now</div>
+          <div style="margin:1rem 0">
+            <span class="tag tag-gold">Java</span>
+            <span class="tag tag-gold">Spring Boot</span>
+            <span class="tag">Microservices</span>
+          </div>
+          <div style="font-size:0.8rem;color:var(--muted);margin:0.8rem 0">Full stack learning • Mentorship included</div>
+          <button class="btn" style="width:100%">🚀 Apply →</button>
+        </div>
+
+        <div class="internship-card">
+          <div class="job-title">📊 Data Science Internship</div>
+          <div class="job-company">Analytics Firm • Mumbai</div>
+          <div class="job-details">🔗 3 months • 💰 ₹25K/month • 📍 Closing Soon</div>
+          <div style="margin:1rem 0">
+            <span class="tag tag-green">Python</span>
+            <span class="tag tag-green">ML</span>
+            <span class="tag">SQL</span>
+          </div>
+          <div style="font-size:0.8rem;color:var(--red);margin:0.8rem 0">⏰ Only 5 positions left</div>
+          <button class="btn" style="width:100%">🚀 Apply →</button>
+        </div>
+
+        <div class="internship-card">
+          <div class="job-title">🛡️ Security Internship</div>
+          <div class="job-company">Cyber Security Ltd • Hyderabad</div>
+          <div class="job-details">🔗 6 months • 💰 ₹35K/month • 📍 Open Now</div>
+          <div style="margin:1rem 0">
+            <span class="tag tag-red">Networking</span>
+            <span class="tag tag-red">Linux</span>
+            <span class="tag">Pen Testing</span>
+          </div>
+          <div style="font-size:0.8rem;color:var(--muted);margin:0.8rem 0">Specialization opportunity • Certificates included</div>
+          <button class="btn" style="width:100%">🚀 Apply →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: SKILLS -->
+    <div class="tab" id="tab-skills">
+      <div class="page-title">
+        <h1>⚡ Skill Development & Analytics</h1>
+        <p>Track progress, get recommendations, unlock achievements</p>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:1.5rem">
+        <div class="card">
+          <div class="card-title">📊 Your Skills Progress</div>
+          <div class="chart">
+            <div class="skill-bar">
+              <span class="skill-name">DSA</span>
+              <div class="skill-track"><div class="skill-fill" style="width:85%"></div></div>
+              <span style="font-size:0.8rem;color:var(--gold);font-weight:600">85%</span>
+            </div>
+            <div class="skill-bar">
+              <span class="skill-name">System Design</span>
+              <div class="skill-track"><div class="skill-fill" style="width:72%"></div></div>
+              <span style="font-size:0.8rem">72%</span>
+            </div>
+            <div class="skill-bar">
+              <span class="skill-name">Database Mgmt</span>
+              <div class="skill-track"><div class="skill-fill" style="width:78%"></div></div>
+              <span style="font-size:0.8rem">78%</span>
+            </div>
+            <div class="skill-bar">
+              <span class="skill-name">React/JavaScript</span>
+              <div class="skill-track"><div class="skill-fill" style="width:81%"></div></div>
+              <span style="font-size:0.8rem">81%</span>
+            </div>
+            <div class="skill-bar">
+              <span class="skill-name">Cloud & DevOps</span>
+              <div class="skill-track"><div class="skill-fill" style="width:65%"></div></div>
+              <span style="font-size:0.8rem">65%</span>
+            </div>
+            <div class="skill-bar">
+              <span class="skill-name">Communication</span>
+              <div class="skill-track"><div class="skill-fill" style="width:81%"></div></div>
+              <span style="font-size:0.8rem">81%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🏆 Achievements & Badges</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1rem">
+            <div style="text-align:center;padding:1rem;background:rgba(255,216,122,0.1);border-radius:8px;border:1px solid rgba(255,216,122,0.2)">
+              <div style="font-size:2.5rem;margin-bottom:0.5rem">⭐</div>
+              <div style="font-size:0.8rem;color:var(--gold);font-weight:600">DSA Master</div>
+            </div>
+            <div style="text-align:center;padding:1rem;background:rgba(181,102,58,0.1);border-radius:8px;border:1px solid rgba(181,102,58,0.2)">
+              <div style="font-size:2.5rem;margin-bottom:0.5rem">🚀</div>
+              <div style="font-size:0.8rem;color:var(--glow);font-weight:600">Quick Learner</div>
+            </div>
+            <div style="text-align:center;padding:1rem;background:rgba(79,255,176,0.1);border-radius:8px;border:1px solid rgba(79,255,176,0.2)">
+              <div style="font-size:2.5rem;margin-bottom:0.5rem">💪</div>
+              <div style="font-size:0.8rem;color:var(--green);font-weight:600">Consistent</div>
+            </div>
+            <div style="text-align:center;padding:1rem;background:rgba(201,123,75,0.1);border-radius:8px;border:1px solid rgba(201,123,75,0.15)">
+              <div style="font-size:2.5rem;margin-bottom:0.5rem;opacity:0.5">🎯</div>
+              <div style="font-size:0.8rem;color:var(--muted);font-weight:600">Interview Ready</div>
+              <div style="font-size:0.65rem;color:var(--muted)">Unlock @ 90%</div>
+            </div>
+            <div style="text-align:center;padding:1rem;background:rgba(255,107,138,0.1);border-radius:8px;border:1px solid rgba(255,107,138,0.15)">
+              <div style="font-size:2.5rem;margin-bottom:0.5rem;opacity:0.5">🌟</div>
+              <div style="font-size:0.8rem;color:var(--muted);font-weight:600">Top Ranker</div>
+              <div style="font-size:0.65rem;color:var(--muted)">Top 3%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🎓 Recommended Learning Paths</div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;margin-top:1rem">
+          <div style="padding:1rem;background:rgba(181,102,58,0.1);border-radius:8px">
+            <h4 style="color:var(--glow);margin-bottom:0.5rem">📈 Backend Developer Path</h4>
+            <div style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem">DSA → System Design → Microservices</div>
+            <button class="btn" style="width:100%;font-size:0.8rem">Start Learning →</button>
+          </div>
+          <div style="padding:1rem;background:rgba(79,255,176,0.1);border-radius:8px">
+            <h4 style="color:var(--green);margin-bottom:0.5rem">🤖 ML Engineer Path</h4>
+            <div style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem">Python → ML Basics → Deep Learning</div>
+            <button class="btn" style="width:100%;font-size:0.8rem">Start Learning →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: DSA ENGINE -->
+    <div class="tab" id="tab-dsa">
+      <div class="page-title">
+        <h1>🔧 DSA Engine & Algorithms</h1>
+        <p>The 4 core data structures powering placement readiness ranking</p>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:1.5rem">
+        <div class="card">
+          <div class="card-title">🔺 Max-Heap Priority Ranking</div>
+          <div style="font-size:0.85rem;color:var(--muted);line-height:1.8;margin-top:1rem">
+            <div class="notification warning" style="margin-bottom:1rem">
+              <strong style="color:var(--gold)">Use Case:</strong> O(1) top student retrieval, O(log n) ranked insert/delete
+            </div>
+            <div class="notification info">
+              <strong style="color:var(--glow)">Complexity:</strong> Get-Max: O(1) • Insert: O(log n) • Delete: O(log n)
+            </div>
+            <div style="background:var(--deep);border:1px solid var(--border);border-radius:6px;padding:1rem;font-family:monospace;font-size:0.75rem;margin-top:1rem;color:var(--glow)">
+              [97.2] Arjun<br/>
+              ├─ [89.1] Priya | [85.6] Kiran<br/>
+              └─ [82.4] Meera | [78.9] Ravi
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🗺️ BFS Skill Graph</div>
+          <div style="font-size:0.85rem;color:var(--muted);line-height:1.8;margin-top:1rem">
+            <div class="notification" style="margin-bottom:1rem">
+              <strong style="color:var(--green)">Use Case:</strong> Generate learning paths & detect skill gaps
+            </div>
+            <div class="notification info">
+              <strong style="color:var(--glow)">Complexity:</strong> O(V + E) where V = skills, E = prerequisites
+            </div>
+            <div style="background:var(--deep);border:1px solid var(--border);border-radius:6px;padding:1rem;font-family:monospace;font-size:0.75rem;margin-top:1rem;color:var(--green)">
+              Level 0: Maths → Programming<br/>
+              Level 1: DSA → DBMS<br/>
+              Level 2: System Design → Cloud<br/>
+              Level 3: DevOps → ML
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🔑 HashMap Skill Index</div>
+          <div style="font-size:0.85rem;color:var(--muted);line-height:1.8;margin-top:1rem">
+            <div class="notification info" style="margin-bottom:1rem">
+              <strong style="color:var(--glow)">Use Case:</strong> O(1) instant skill lookup during job matching
+            </div>
+            <div class="notification warning">
+              <strong style="color:var(--gold)">Operations:</strong> Get: O(1) • Put: O(1) • Remove: O(1)
+            </div>
+            <div style="background:var(--deep);border:1px solid var(--border);border-radius:6px;padding:1rem;font-family:monospace;font-size:0.75rem;margin-top:1rem;color:var(--glow)">
+              StudentID → {DSA:85%, React:81%,<br/>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SQL:78%, Cloud:65%}
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🛣️ Dijkstra Optimal Path</div>
+          <div style="font-size:0.85rem;color:var(--muted);line-height:1.8;margin-top:1rem">
+            <div class="notification" style="margin-bottom:1rem">
+              <strong style="color:var(--red)">Use Case:</strong> Find minimum-cost path to target role
+            </div>
+            <div class="notification info">
+              <strong style="color:var(--glow)">Complexity:</strong> O((V + E) log V) with priority queue
+            </div>
+            <div style="background:var(--deep);border:1px solid var(--border);border-radius:6px;padding:1rem;font-family:monospace;font-size:0.75rem;margin-top:1rem;color:var(--accent)">
+              Python (start) →[2.1]→ ML →[3.4]→<br/>
+              DL →[4.0]→ NLP (Total: 9.5 hours)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+</div>
+
+<script>
+// Auth Check
+window.addEventListener('load', function() {
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (!user) {
+    alert('Please login first');
+    window.location.href = 'index.html';
+    return;
+  }
+  document.getElementById('user-display').textContent = `👤 ${user.name || user.email}`;
+});
+
+function handleLogout() {
+  if (confirm('Are you sure you want to logout?')) { logout(); }
+}
+
+// Snowflakes
+ snow = document.getElementById('snow');
+ FLAKES = ['❄','❅','❆','✦','·','*'];
+for (let i = 0; i < 30; i++) {
+  const f = document.createElement('div');
+  f.className = 'flake';
+  f.textContent = FLAKES[Math.floor(Math.random() * FLAKES.length)];
+  f.style.left = Math.random() * 100 + '%';
+  f.style.fontSize = (10 + Math.random() * 16) + 'px';
+  f.style.opacity = 0.15 + Math.random() * 0.25;
+  const dur = 8 + Math.random() * 14;
+  f.style.animationDuration = dur + 's';
+  f.style.animationDelay = -Math.random() * dur + 's';
+  snow.appendChild(f);
+}
+
+// Tab Switching
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('nav .nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  
+  document.getElementById('tab-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+</script>
+
+
+<!-- Supabase SDK + Shared Auth -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
+<script>
+// Bridge: expose auth.js logout to inline onclick handlers
+document.addEventListener('DOMContentLoaded', function() {
+  window.__sprmsLogout = logout;
+  requireAuth();
+});
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPRMS — Complete Placement System</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Jost:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #faf8f5;
+    --deep: #f5f0ea;
+    --mid: #ede6dc;
+    --panel: #f9f6f1;
+    --border: rgba(139,90,60,0.15);
+    --ice: #8b5a3c;
+    --frost: #3d2314;
+    --glow: #b5663a;
+    --accent: #c97b4b;
+    --gold: #8b5a3c;
+    --green: #6b7c5c;
+    --red: #c0392b;
+    --text: #3d2314;
+    --muted: rgba(93,60,40,0.6);
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --sans: 'Jost', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--navy);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── Snowflakes ─── */
+  #snow { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .flake {
+    position: absolute;
+    top: -20px;
+    color: rgba(139,90,60,0.3);
+    font-size: 16px;
+    animation: fall linear infinite;
+    user-select: none;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+  }
+
+  /* ─── Header ─── */
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 0 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 72px;
+    border-bottom: 1px solid var(--border);
+    background: #f5f0ea;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    position: sticky;
+    top: 0;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo-mark {
+    width: 40px; height: 40px;
+    border: 2px solid var(--glow);
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-family: var(--serif);
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: var(--glow);
+    box-shadow: 0 0 16px rgba(181,102,58,0.35);
+  }
+  .logo-text { font-family: var(--serif); font-size: 1.25rem; letter-spacing: 0.02em; }
+  .logo-sub { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; display: block; margin-top: 1px; }
+
+  nav { display: flex; gap: 4px; }
+  .nav-btn {
+    background: none; border: none; cursor: pointer;
+    padding: 7px 16px; border-radius: 6px;
+    font-family: var(--sans); font-size: 0.82rem; font-weight: 500;
+    color: var(--muted); letter-spacing: 0.04em;
+    transition: all 0.2s;
+  }
+  .nav-btn:hover { color: var(--frost); background: rgba(181,102,58,0.08); }
+  .nav-btn.active {
+    color: var(--glow);
+    background: rgba(181,102,58,0.14);
+    box-shadow: inset 0 -2px 0 var(--glow);
+  }
+
+  .header-right { display: flex; align-items: center; gap: 14px; }
+  .badge {
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
+    background: rgba(201,123,75,0.12); color: var(--accent); border: 1px solid rgba(201,123,75,0.3);
+  }
+
+  /* ─── Main ─── */
+  main {
+    position: relative; z-index: 1;
+    max-width: 1280px; margin: 0 auto;
+    padding: 2.5rem 2.5rem 4rem;
+  }
+
+  /* ─── Tabs ─── */
+  .tab { display: none; animation: fadeIn 0.35s ease; }
+  .tab.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ─── Page Title ─── */
+  .page-title {
+    margin-bottom: 2.2rem;
+  }
+  .page-title h1 {
+    font-family: var(--serif);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 900;
+    line-height: 1.1;
+    background: linear-gradient(135deg, var(--frost) 0%, var(--glow) 60%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .page-title p { color: var(--muted); font-size: 0.9rem; margin-top: 6px; line-height: 1.6; }
+
+  /* ─── Cards / Panels ─── */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.6rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(181,102,58,0.04) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .card-title {
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--frost);
+    margin-bottom: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title .icon { font-size: 1rem; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.4rem; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 1.4rem; }
+  .col-span-2 { grid-column: span 2; }
+
+  /* ─── Stat Tiles ─── */
+  .stat-tile {
+    background: linear-gradient(135deg, var(--mid) 0%, var(--panel) 100%);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.4rem 1.6rem;
+    position: relative; overflow: hidden;
+  }
+  .stat-tile .stat-val {
+    font-family: var(--serif);
+    font-size: 2.4rem;
+    font-weight: 900;
+    color: var(--glow);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-tile .stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+  .stat-tile .stat-sub { font-size: 0.8rem; color: var(--green); margin-top: 4px; }
+  .stat-tile .glow-orb {
+    position: absolute; right: -20px; top: -20px;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(181,102,58,0.2) 0%, transparent 70%);
+  }
+
+  /* ─── Table ─── */
+  .search-bar {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--mid); border: 1px solid var(--border);
+    border-radius: 10px; padding: 9px 14px;
+    margin-bottom: 1rem;
+  }
+  .search-bar input {
+    background: none; border: none; outline: none;
+    color: var(--text); font-family: var(--sans); font-size: 0.88rem;
+    width: 100%; flex: 1;
+  }
+  .search-bar input::placeholder { color: var(--muted); }
+  .search-bar span { color: var(--muted); font-size: 1rem; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  thead tr { border-bottom: 1px solid var(--border); }
+  th {
+    text-align: left; padding: 10px 14px;
+    font-size: 0.7rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+  td { padding: 11px 14px; border-bottom: 1px solid rgba(120,200,255,0.06); }
+  tr:hover td { background: rgba(181,102,58,0.05); }
+  .rank-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 50%;
+    font-weight: 700; font-size: 0.8rem;
+  }
+  .rank-1 { background: rgba(255,216,122,0.2); color: var(--gold); border: 1px solid rgba(255,216,122,0.4); }
+  .rank-2 { background: rgba(168,216,240,0.15); color: var(--frost); border: 1px solid rgba(168,216,240,0.3); }
+  .rank-3 { background: rgba(201,123,75,0.1); color: var(--accent); border: 1px solid rgba(201,123,75,0.25); }
+  .rank-n { background: rgba(181,102,58,0.05); color: var(--muted); }
+
+  .score-bar-wrap { display: flex; align-items: center; gap: 10px; }
+  .score-bar {
+    flex: 1; height: 5px; background: var(--mid); border-radius: 3px; overflow: hidden;
+  }
+  .score-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--glow), var(--accent));
+    border-radius: 3px;
+    transition: width 0.6s ease;
+  }
+
+  .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 20px;
+    font-size: 0.68rem; font-weight: 600; letter-spacing: 0.04em;
+    margin: 2px;
+  }
+  .tag-blue { background: rgba(181,102,58,0.15); color: var(--glow); }
+  .tag-green { background: rgba(79,255,176,0.13); color: var(--green); }
+  .tag-gold { background: rgba(255,216,122,0.13); color: var(--gold); }
+  .tag-red { background: rgba(255,107,138,0.13); color: var(--red); }
+
+  /* ─── Progress bars ─── */
+  .progress-row { margin-bottom: 1rem; }
+  .progress-label { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.82rem; }
+  .progress-track { height: 8px; background: var(--mid); border-radius: 4px; overflow: hidden; }
+  .progress-fill {
+    height: 100%; border-radius: 4px;
+    background: linear-gradient(90deg, var(--glow), var(--accent));
+    position: relative; overflow: hidden;
+  }
+  .progress-fill::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%);
+    animation: shimmer 2s infinite;
+  }
+  @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(200%); } }
+
+  /* ─── Formula ─── */
+  .formula-box {
+    background: var(--deep);
+    border: 1px solid rgba(201,123,75,0.2);
+    border-radius: 12px;
+    padding: 1.2rem 1.6rem;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--accent);
+    margin: 1rem 0;
+    line-height: 1.8;
+    position: relative;
+    overflow: hidden;
+  }
+  .formula-box::before {
+    content: 'FORMULA';
+    position: absolute; top: 8px; right: 12px;
+    font-size: 0.6rem; letter-spacing: 0.15em;
+    color: rgba(201,123,75,0.3);
+  }
+
+  /* ─── BFS Path ─── */
+  .bfs-node {
+    display: inline-flex; flex-direction: column; align-items: center;
+    padding: 10px 16px; border-radius: 10px; margin: 6px;
+    font-size: 0.78rem; font-weight: 600; text-align: center;
+    min-width: 90px; position: relative;
+  }
+  .bfs-node .node-name { font-size: 0.82rem; margin-bottom: 2px; }
+  .bfs-node .node-level { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.7; }
+  .bfs-done { background: rgba(79,255,176,0.13); border: 1px solid rgba(79,255,176,0.35); color: var(--green); }
+  .bfs-avail { background: rgba(181,102,58,0.13); border: 1px solid rgba(181,102,58,0.4); color: var(--glow); }
+  .bfs-locked { background: rgba(168,216,240,0.05); border: 1px solid rgba(168,216,240,0.12); color: var(--muted); }
+  .bfs-arrow { color: var(--muted); font-size: 1.2rem; margin: 0 2px; align-self: center; }
+
+  .bfs-wrap { display: flex; flex-wrap: wrap; align-items: center; padding: 0.5rem 0; }
+
+  /* ─── HashMap ─── */
+  .hashmap { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+  .hash-entry {
+    background: var(--deep);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .hash-key { font-family: var(--mono); font-size: 0.72rem; color: var(--accent); }
+  .hash-val { font-size: 0.78rem; color: var(--text); font-weight: 600; }
+  .hash-sub { font-size: 0.68rem; color: var(--muted); }
+
+  /* ─── DSA Cards ─── */
+  .dsa-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 1.4rem; }
+
+  .dsa-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.6rem;
+    position: relative; overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .dsa-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 32px rgba(181,102,58,0.12);
+  }
+  .dsa-card .dsa-num {
+    font-family: var(--serif); font-size: 3rem; font-weight: 900;
+    position: absolute; right: 1.2rem; top: 0.8rem;
+    opacity: 0.08; color: var(--glow); line-height: 1;
+  }
+  .dsa-tag {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 0.7rem;
+  }
+  .dsa-title { font-family: var(--serif); font-size: 1.15rem; font-weight: 700; color: var(--frost); margin-bottom: 0.5rem; }
+  .dsa-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.65; margin-bottom: 1rem; }
+  .dsa-use { font-size: 0.8rem; color: var(--text); margin-bottom: 1rem; }
+
+  /* Heap Tree */
+  .heap-tree { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .heap-row { display: flex; gap: 12px; justify-content: center; }
+  .heap-node {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 0.65rem; font-weight: 700; line-height: 1.2;
+    border: 2px solid rgba(255,216,122,0.5);
+    background: rgba(255,216,122,0.1); color: var(--gold);
+  }
+  .heap-node.root { background: rgba(255,216,122,0.25); border-color: var(--gold); box-shadow: 0 0 12px rgba(255,216,122,0.3); }
+
+  /* Graph path */
+  .graph-path { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+  .gp-node {
+    padding: 5px 11px; border-radius: 20px;
+    font-size: 0.75rem; font-weight: 600;
+    background: rgba(79,255,176,0.12); border: 1px solid rgba(79,255,176,0.3); color: var(--green);
+  }
+  .gp-edge { font-size: 0.75rem; color: var(--muted); }
+
+  /* Code block */
+  .code-block {
+    background: var(--deep); border: 1px solid rgba(201,123,75,0.15);
+    border-radius: 8px; padding: 12px;
+    font-family: var(--mono); font-size: 0.72rem;
+    line-height: 1.7; color: var(--glow);
+    overflow-x: auto;
+  }
+  .code-kw { color: var(--accent); }
+  .code-str { color: var(--green); }
+  .code-cm { color: rgba(168,216,240,0.4); }
+
+  /* Dijkstra */
+  .dijkstra-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
+  .dijk-cell {
+    background: var(--deep); border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px; text-align: center;
+  }
+  .dijk-node { font-size: 0.7rem; color: var(--muted); margin-bottom: 2px; }
+  .dijk-wt { font-family: var(--mono); font-size: 0.9rem; font-weight: 700; color: var(--glow); }
+
+  /* ─── How it Works ─── */
+  .steps { display: flex; flex-direction: column; gap: 0; }
+  .step-item {
+    display: grid; grid-template-columns: 64px 1fr;
+    gap: 1.2rem; padding: 1.4rem 0;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .step-item:last-child { border-bottom: none; }
+  .step-num {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--serif); font-size: 1.2rem; font-weight: 900;
+    color: #faf8f5;
+    background: linear-gradient(135deg, var(--glow), var(--accent));
+    box-shadow: 0 0 16px rgba(181,102,58,0.3);
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+  .step-content h3 { font-family: var(--serif); font-size: 1.05rem; font-weight: 700; color: var(--frost); margin-bottom: 6px; }
+  .step-content p { font-size: 0.84rem; color: var(--muted); line-height: 1.65; }
+
+  .endpoint-list { display: flex; flex-direction: column; gap: 8px; }
+  .endpoint {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--deep); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px;
+    font-family: var(--mono); font-size: 0.8rem;
+  }
+  .method {
+    padding: 2px 8px; border-radius: 4px;
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em;
+    flex-shrink: 0;
+  }
+  .get { background: rgba(79,255,176,0.15); color: var(--green); }
+  .post { background: rgba(181,102,58,0.15); color: var(--glow); }
+  .del { background: rgba(255,107,138,0.15); color: var(--red); }
+  .endpoint-path { color: var(--text); }
+  .endpoint-desc { color: var(--muted); font-size: 0.72rem; margin-left: auto; font-family: var(--sans); }
+
+  /* ─── Profile ─── */
+  .profile-header {
+    display: flex; align-items: center; gap: 1.6rem;
+    padding: 1.4rem 0; margin-bottom: 1.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .avatar {
+    width: 72px; height: 72px; border-radius: 50%;
+    border: 3px solid var(--glow);
+    background: linear-gradient(135deg, var(--mid), var(--panel));
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--serif); font-size: 1.8rem; font-weight: 900;
+    color: var(--glow);
+    box-shadow: 0 0 24px rgba(181,102,58,0.25);
+    flex-shrink: 0;
+  }
+  .profile-info h2 { font-family: var(--serif); font-size: 1.5rem; font-weight: 700; color: var(--frost); }
+  .profile-info p { font-size: 0.82rem; color: var(--muted); margin-top: 3px; }
+  .profile-stats { display: flex; gap: 1.4rem; margin-top: 10px; }
+  .ps { text-align: center; }
+  .ps-val { font-family: var(--serif); font-size: 1.3rem; font-weight: 700; color: var(--glow); }
+  .ps-lbl { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+
+  /* Skill adder */
+  .skill-adder {
+    display: flex; gap: 8px; margin-bottom: 1rem;
+  }
+  .skill-adder input {
+    flex: 1; background: var(--mid); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 14px;
+    color: var(--text); font-family: var(--sans); font-size: 0.85rem; outline: none;
+    transition: border-color 0.2s;
+  }
+  .skill-adder input:focus { border-color: var(--glow); }
+  .btn {
+    padding: 8px 18px; border-radius: 8px; border: none; cursor: pointer;
+    font-family: var(--sans); font-size: 0.82rem; font-weight: 600;
+    background: linear-gradient(135deg, var(--glow), var(--accent));
+    color: #faf8f5;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn-ghost {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); padding: 4px 10px;
+    font-size: 0.72rem;
+  }
+  .skills-cloud { display: flex; flex-wrap: wrap; gap: 6px; }
+  .skill-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 20px;
+    background: rgba(181,102,58,0.12); border: 1px solid rgba(181,102,58,0.3);
+    color: var(--glow); font-size: 0.78rem; font-weight: 600;
+    cursor: default; transition: background 0.2s;
+  }
+  .skill-chip .rm { cursor: pointer; opacity: 0.6; font-size: 0.85rem; }
+  .skill-chip .rm:hover { opacity: 1; color: var(--red); }
+
+  /* ─── Footer ─── */
+  footer {
+    position: relative; z-index: 1;
+    text-align: center; padding: 2rem;
+    font-size: 0.75rem; color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+  footer span { color: var(--glow); }
+
+  /* ─── Scrollbar ─── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--deep); }
+  ::-webkit-scrollbar-thumb { background: rgba(181,102,58,0.25); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(181,102,58,0.4); }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 900px) {
+    .grid-4, .grid-3 { grid-template-columns: repeat(2,1fr); }
+    .dsa-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    header { padding: 0 1rem; }
+    nav .nav-btn { padding: 6px 10px; font-size: 0.75rem; }
+    main { padding: 1.5rem 1rem 3rem; }
+    .grid-2, .grid-4, .grid-3 { grid-template-columns: 1fr; }
+    .col-span-2 { grid-column: span 1; }
+    .profile-header { flex-direction: column; text-align: center; }
+  }
+
+  /* aurora bg */
+  .aurora {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: radial-gradient(ellipse 80% 50% at 20% 10%, rgba(181,102,58,0.06) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(201,123,75,0.04) 0%, transparent 50%);
+    animation: auroraShift 12s ease-in-out infinite alternate;
+  }
+  @keyframes auroraShift {
+    from { opacity: 1; }
+    to { opacity: 0.6; filter: hue-rotate(15deg); }
+  }
+</style>
+</head>
+<body>
+
+<div id="snow"></div>
+<div class="aurora"></div>
+
+<!-- ═══ HEADER ═══ -->
+<header>
+  <div class="logo">
+    <div class="logo-mark">S</div>
+    <div>
+      <div class="logo-text">SkillBridge</div>
+      <span class="logo-sub">Placement Readiness System</span>
+    </div>
+  </div>
+
+  <nav>
+    <button class="nav-btn" onclick="window.location.href='dashboard-user.html'">📊 Dashboard</button>
+    <button class="nav-btn" onclick="window.location.href='courses.html'">📚 Courses</button>
+    <button class="nav-btn" onclick="window.location.href='jobs.html'">💼 Jobs</button>
+    <button class="nav-btn active" onclick="switchTab('institution', this)">🏛 Institution</button>
+    <button class="nav-btn" onclick="switchTab('student', this)">👤 Student</button>
+    <button class="nav-btn" onclick="switchTab('dsa', this)">⚙️ DSA Engine</button>
+    <button class="nav-btn" onclick="switchTab('howitworks', this)">📘 How It Works</button>
+  </nav>
+
+  <div class="header-right">
+    <div class="badge">● LIVE</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:0.85rem;color:var(--text)" id="user-display"></span>
+      <button class="btn" style="padding:6px 14px;font-size:0.8rem" onclick="handleLogout()">🚪 Logout</button>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ MAIN ═══ -->
+<main>
+
+  <!-- ══ TAB 1: INSTITUTION ══ -->
+  <div class="tab active" id="tab-institution">
+    <div class="page-title">
+      <h1>Institution Dashboard</h1>
+      <p>Real-time placement readiness metrics, student rankings, and workshop ROI analytics.</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid-4" style="margin-bottom:1.4rem">
+      <div class="stat-tile">
+        <div class="glow-orb"></div>
+        <div class="stat-val">247</div>
+        <div class="stat-label">Total Students</div>
+        <div class="stat-sub">↑ +12 this month</div>
+      </div>
+      <div class="stat-tile">
+        <div class="glow-orb"></div>
+        <div class="stat-val">84%</div>
+        <div class="stat-label">Placement Rate</div>
+        <div class="stat-sub">↑ +6% YoY</div>
+      </div>
+      <div class="stat-tile">
+        <div class="glow-orb"></div>
+        <div class="stat-val">19</div>
+        <div class="stat-label">Active Workshops</div>
+        <div class="stat-sub">4 ending this week</div>
+      </div>
+      <div class="stat-tile">
+        <div class="glow-orb"></div>
+        <div class="stat-val">3.8×</div>
+        <div class="stat-label">Workshop ROI</div>
+        <div class="stat-sub">avg. per program</div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:1.4rem">
+      <!-- Rankings Table -->
+      <div class="card col-span-2">
+        <div class="card-title"><span class="icon">🏆</span> Student Rankings — Min-Heap Priority Queue</div>
+        <div class="search-bar">
+          <span>🔍</span>
+          <input type="text" id="search-input" placeholder="Search by name or skill…" oninput="filterTable()">
+        </div>
+        <table id="rank-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Name</th>
+              <th>Skills</th>
+              <th>Score</th>
+              <th>Workshops</th>
+              <th>Internship</th>
+            </tr>
+          </thead>
+          <tbody id="rank-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Formula -->
+      <div class="card">
+        <div class="card-title"><span class="icon">🧮</span> Composite Score Formula</div>
+        <div class="formula-box">
+          Score = (Skills × 0.4)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (Workshops × 0.3)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (Internships × 0.2)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (Projects × 0.1)
+        </div>
+        <div style="font-size:0.82rem;color:var(--muted);line-height:1.7">
+          Each component is normalized to a 0–100 scale. The weighted sum is stored in a <span style="color:var(--accent)">Max-Heap</span> for O(log n) insertion and O(1) top-student retrieval.<br><br>
+          Workshop attendance multiplies skill score by a <span style="color:var(--green)">bonus factor (1.05–1.25)</span> based on relevance to career track.
+        </div>
+      </div>
+
+      <!-- Workshop ROI -->
+      <div class="card">
+        <div class="card-title"><span class="icon">📊</span> Workshop ROI Tracker</div>
+        <div id="roi-bars"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB 2: STUDENT ══ -->
+  <div class="tab" id="tab-student">
+    <div class="page-title">
+      <h1>Student Profile</h1>
+      <p>Personalized readiness score, BFS learning path, and skill management console.</p>
+    </div>
+
+    <div class="grid-2">
+      <!-- Profile Card -->
+      <div class="card">
+        <div class="profile-header">
+          <div class="avatar">M</div>
+          <div class="profile-info">
+            <h2>Meera Patel</h2>
+            <p>B.Tech CSE · Semester 6 · ID: CSE2021047</p>
+            <div class="profile-stats">
+              <div class="ps">
+                <div class="ps-val" id="prof-score">82.4</div>
+                <div class="ps-lbl">Score</div>
+              </div>
+              <div class="ps">
+                <div class="ps-val">#4</div>
+                <div class="ps-lbl">Rank</div>
+              </div>
+              <div class="ps">
+                <div class="ps-val" id="prof-skills">9</div>
+                <div class="ps-lbl">Skills</div>
+              </div>
+              <div class="ps">
+                <div class="ps-val">3</div>
+                <div class="ps-lbl">Internships</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-title" style="font-size:0.9rem"><span class="icon">⚡</span> Readiness Breakdown</div>
+        <div id="breakdown-bars"></div>
+      </div>
+
+      <!-- Skill Manager -->
+      <div class="card">
+        <div class="card-title"><span class="icon">🗂</span> Skill Manager — HashMap Index</div>
+        <div class="skill-adder">
+          <input type="text" id="skill-input" placeholder="Add a skill (e.g. React, SQL…)" onkeydown="if(event.key==='Enter')addSkill()">
+          <button class="btn" onclick="addSkill()">Add Skill</button>
+        </div>
+        <div class="skills-cloud" id="skills-cloud"></div>
+        <div style="margin-top:1.2rem">
+          <div class="card-title" style="font-size:0.85rem;margin-bottom:0.8rem"><span class="icon">🔑</span> HashMap Storage</div>
+          <div class="hashmap" id="hashmap"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BFS Learning Path -->
+    <div class="card" style="margin-top:1.4rem">
+      <div class="card-title"><span class="icon">🗺</span> BFS Learning Path — Breadth-First Traversal</div>
+      <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem">Skills are modelled as a graph. BFS explores all prerequisites at the same depth before advancing — ensuring no knowledge gap.</p>
+      <div class="bfs-wrap" id="bfs-path"></div>
+    </div>
+  </div>
+
+  <!-- ══ TAB 3: DSA ENGINE ══ -->
+  <div class="tab" id="tab-dsa">
+    <div class="page-title">
+      <h1>DSA Engine</h1>
+      <p>The four data structures powering SkillBridge — each chosen for its algorithmic efficiency advantage.</p>
+    </div>
+
+    <div class="dsa-grid">
+      <!-- 1. Max Heap -->
+      <div class="dsa-card">
+        <div class="dsa-num">01</div>
+        <div class="dsa-tag tag-gold">Max-Heap / Min-Heap</div>
+        <div class="dsa-title">Priority Queue Ranking</div>
+        <div class="dsa-desc">Student scores are maintained in a Max-Heap. The highest-scoring student is always at the root, accessible in O(1). Insertions and deletions run in O(log n).</div>
+        <div class="dsa-use"><span style="color:var(--gold)">Use:</span> Top-K students, leaderboard, priority workshop invites.</div>
+        <div class="heap-tree">
+          <div class="heap-row"><div class="heap-node root">97.2<br><span style="font-size:0.58rem">Arjun</span></div></div>
+          <div class="heap-row">
+            <div class="heap-node">89.1<br><span style="font-size:0.58rem">Priya</span></div>
+            <div class="heap-node">85.6<br><span style="font-size:0.58rem">Kiran</span></div>
+          </div>
+          <div class="heap-row">
+            <div class="heap-node">82.4<br><span style="font-size:0.58rem">Meera</span></div>
+            <div class="heap-node">78.9<br><span style="font-size:0.58rem">Ravi</span></div>
+            <div class="heap-node">76.3<br><span style="font-size:0.58rem">Neha</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Graph + BFS -->
+      <div class="dsa-card">
+        <div class="dsa-num">02</div>
+        <div class="dsa-tag tag-green">Graph + BFS</div>
+        <div class="dsa-title">Skill Prerequisite Graph</div>
+        <div class="dsa-desc">Skills form a directed graph where edges represent prerequisites. BFS traversal generates personalized learning paths, ensuring all dependencies are satisfied level by level.</div>
+        <div class="dsa-use"><span style="color:var(--green)">Use:</span> Learning path generation, skill gap detection, course sequencing.</div>
+        <div class="graph-path" style="margin-top:0.8rem">
+          <div class="gp-node">Maths</div>
+          <div class="gp-edge">→</div>
+          <div class="gp-node">DSA</div>
+          <div class="gp-edge">→</div>
+          <div class="gp-node">Python</div>
+          <div class="gp-edge">→</div>
+          <div class="gp-node">ML</div>
+          <div class="gp-edge">→</div>
+          <div class="gp-node">Deep Learning</div>
+        </div>
+        <div class="graph-path" style="margin-top:8px">
+          <div class="gp-node">Networking</div>
+          <div class="gp-edge">→</div>
+          <div class="gp-node">OS</div>
+          <div class="gp-edge">→</div>
+          <div class="gp-node">Cloud</div>
+          <div class="gp-edge">→</div>
+          <div class="gp-node">DevOps</div>
+        </div>
+      </div>
+
+      <!-- 3. HashMap -->
+      <div class="dsa-card">
+        <div class="dsa-num">03</div>
+        <div class="dsa-tag tag-blue">HashMap</div>
+        <div class="dsa-title">Skill Index Store</div>
+        <div class="dsa-desc">Student skill inventories are stored in HashMaps keyed by student ID. O(1) average-case lookups allow instant retrieval of skills, scores, and metadata during placement matching.</div>
+        <div class="dsa-use"><span style="color:var(--glow)">Use:</span> Skill lookup, duplicate detection, fast profile hydration.</div>
+        <div class="code-block" style="margin-top:0.8rem">
+<span class="code-kw">HashMap</span>&lt;StudentID, SkillSet&gt; index;<br><br>
+<span class="code-cm">// O(1) insert</span><br>
+index.<span class="code-kw">put</span>(<span class="code-str">"CSE2021047"</span>, skills);<br><br>
+<span class="code-cm">// O(1) lookup</span><br>
+SkillSet s = index.<span class="code-kw">get</span>(<span class="code-str">"CSE2021047"</span>);
+        </div>
+      </div>
+
+      <!-- 4. Dijkstra -->
+      <div class="dsa-card">
+        <div class="dsa-num">04</div>
+        <div class="dsa-tag tag-red">Dijkstra's Algorithm</div>
+        <div class="dsa-title">Optimal Upskilling Path</div>
+        <div class="dsa-desc">Edge weights represent learning cost (time + difficulty). Dijkstra finds the minimum-cost path from a student's current skills to a target job role, minimising total effort.</div>
+        <div class="dsa-use"><span style="color:var(--red)">Use:</span> Career path optimisation, workshop sequencing, resource allocation.</div>
+        <div class="dijkstra-grid" style="margin-top:0.8rem">
+          <div class="dijk-cell"><div class="dijk-node">Python→ML</div><div class="dijk-wt">2.1</div></div>
+          <div class="dijk-cell"><div class="dijk-node">ML→DL</div><div class="dijk-wt">3.4</div></div>
+          <div class="dijk-cell"><div class="dijk-node">DL→NLP</div><div class="dijk-wt">4.0</div></div>
+          <div class="dijk-cell"><div class="dijk-node">DB→SQL</div><div class="dijk-wt">1.2</div></div>
+          <div class="dijk-cell"><div class="dijk-node">SQL→Cloud</div><div class="dijk-wt">2.8</div></div>
+          <div class="dijk-cell"><div class="dijk-node">OS→Cloud</div><div class="dijk-wt">3.1</div></div>
+        </div>
+        <div style="margin-top:8px;font-size:0.75rem;color:var(--muted)">Numbers = learning cost units (lower = easier path)</div>
+      </div>
+    </div>
+
+    <!-- Tech Stack -->
+    <div class="card" style="margin-top:1.4rem">
+      <div class="card-title"><span class="icon">🛠</span> Tech Stack</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <span class="tag tag-blue">Java (Spring Boot)</span>
+        <span class="tag tag-blue">REST API</span>
+        <span class="tag tag-green">React.js</span>
+        <span class="tag tag-green">Tailwind CSS</span>
+        <span class="tag tag-gold">PostgreSQL</span>
+        <span class="tag tag-gold">Redis Cache</span>
+        <span class="tag tag-red">Docker</span>
+        <span class="tag tag-red">GitHub Actions CI/CD</span>
+        <span class="tag tag-blue">JUnit 5</span>
+        <span class="tag tag-green">Chart.js</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB 4: HOW IT WORKS ══ -->
+  <div class="tab" id="tab-howitworks">
+    <div class="page-title">
+      <h1>How It Works</h1>
+      <p>End-to-end flow from student data entry to placement-ready rankings and personalised recommendations.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><span class="icon">🔄</span> System Flow</div>
+        <div class="steps">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <h3>Data Ingestion</h3>
+              <p>Student profiles, skill certifications, workshop attendance, and internship records are submitted via REST API. Each entry is validated and stored in PostgreSQL.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <h3>Skill Hashing</h3>
+              <p>Skills are indexed into a HashMap keyed by Student ID. O(1) lookup enables instant profile retrieval during live placement drives.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <h3>Score Computation</h3>
+              <p>The composite score formula weighs skills, workshops, internships, and projects. Scores are inserted into a Max-Heap in O(log n) time.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">4</div>
+            <div class="step-content">
+              <h3>Graph Construction</h3>
+              <p>A directed skill prerequisite graph is built from the curriculum ontology. BFS generates the personalised learning path for each student from their current skill node.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">5</div>
+            <div class="step-content">
+              <h3>Path Optimisation</h3>
+              <p>Dijkstra's algorithm computes the minimum-cost upskilling path to a target role, recommending the most efficient workshop sequence.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">6</div>
+            <div class="step-content">
+              <h3>Dashboard & Alerts</h3>
+              <p>Real-time rankings, individual feedback, and institutional analytics are surfaced via the React dashboard. Automated alerts notify students of skill gaps and upcoming workshops.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- API Endpoints -->
+      <div>
+        <div class="card" style="margin-bottom:1.4rem">
+          <div class="card-title"><span class="icon">🔌</span> REST API Endpoints</div>
+          <div class="endpoint-list">
+            <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/api/students</span><span class="endpoint-desc">Create student</span></div>
+            <div class="endpoint"><span class="method get">GET</span><span class="endpoint-path">/api/students/{id}</span><span class="endpoint-desc">Get profile</span></div>
+            <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/api/students/{id}/skills</span><span class="endpoint-desc">Add skill</span></div>
+            <div class="endpoint"><span class="method del">DEL</span><span class="endpoint-path">/api/students/{id}/skills/{skill}</span><span class="endpoint-desc">Remove skill</span></div>
+            <div class="endpoint"><span class="method get">GET</span><span class="endpoint-path">/api/rankings</span><span class="endpoint-desc">Top-K students</span></div>
+            <div class="endpoint"><span class="method get">GET</span><span class="endpoint-path">/api/path/{id}</span><span class="endpoint-desc">BFS learning path</span></div>
+            <div class="endpoint"><span class="method get">GET</span><span class="endpoint-path">/api/optimal/{id}/{role}</span><span class="endpoint-desc">Dijkstra path</span></div>
+            <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/api/workshops</span><span class="endpoint-desc">Add workshop</span></div>
+            <div class="endpoint"><span class="method get">GET</span><span class="endpoint-path">/api/analytics/roi</span><span class="endpoint-desc">Workshop ROI</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="icon">✅</span> What Each DSA Solves</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;gap:10px;align-items:flex-start">
+              <span class="tag tag-gold" style="flex-shrink:0">Max-Heap</span>
+              <span style="font-size:0.82rem;color:var(--muted)">O(1) top-student retrieval, O(log n) ranked insert/delete for live leaderboard.</span>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start">
+              <span class="tag tag-green" style="flex-shrink:0">BFS Graph</span>
+              <span style="font-size:0.82rem;color:var(--muted)">Guarantees shortest prerequisite path, detects skill gaps level by level.</span>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start">
+              <span class="tag tag-blue" style="flex-shrink:0">HashMap</span>
+              <span style="font-size:0.82rem;color:var(--muted)">O(1) skill lookup and deduplication for thousands of concurrent profiles.</span>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start">
+              <span class="tag tag-red" style="flex-shrink:0">Dijkstra</span>
+              <span style="font-size:0.82rem;color:var(--muted)">Minimises total learning cost to reach any target role via optimal workshop path.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Built with ❄️ &nbsp;|&nbsp; <span>SkillBridge v2.1</span> &nbsp;|&nbsp; DSA Project-Based Learning &nbsp;|&nbsp; All rights reserved
+</footer>
+
+<script>
+// ─── Authentication Check ───
+window.addEventListener('load', function() {
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (!user) {
+    alert('Please login first');
+    window.location.href = 'index.html';
+    return;
+  }
+  document.getElementById('user-display').textContent = `👤 ${user.name || user.email}`;
+});
+
+function handleLogout() {
+  if (confirm('Are you sure you want to logout?')) { logout(); }
+}
+
+// ─── Snowflakes ───
+const snow = document.getElementById('snow');
+const FLAKES = ['❄','❅','❆','✦','·','*'];
+for (let i = 0; i < 45; i++) {
+  const f = document.createElement('div');
+  f.className = 'flake';
+  f.textContent = FLAKES[Math.floor(Math.random() * FLAKES.length)];
+  f.style.left = Math.random() * 100 + '%';
+  f.style.fontSize = (10 + Math.random() * 18) + 'px';
+  f.style.opacity = 0.3 + Math.random() * 0.5;
+  const dur = 8 + Math.random() * 14;
+  f.style.animationDuration = dur + 's';
+  f.style.animationDelay = -Math.random() * dur + 's';
+  snow.appendChild(f);
+}
+
+// ─── Tab Switching ───
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ─── Student Data ───
+const students = [
+  { name: 'Arjun Sharma',  skills: ['Java','DSA','Spring Boot','React','SQL'], score: 97.2, ws: 8, intern: true, track: 'Backend' },
+  { name: 'Priya Nair',    skills: ['Python','ML','TensorFlow','NLP'],         score: 89.1, ws: 7, intern: true, track: 'AI/ML' },
+  { name: 'Kiran Rao',     skills: ['C++','Systems','Linux','Docker'],          score: 85.6, ws: 6, intern: true, track: 'SysEng' },
+  { name: 'Meera Patel',   skills: ['Python','React','Node.js','MongoDB'],      score: 82.4, ws: 5, intern: true, track: 'Full Stack' },
+  { name: 'Ravi Kumar',    skills: ['Java','Android','Kotlin'],                 score: 78.9, ws: 5, intern: false, track: 'Mobile' },
+  { name: 'Neha Joshi',    skills: ['UI/UX','Figma','React'],                   score: 76.3, ws: 4, intern: false, track: 'Design' },
+  { name: 'Siddharth M',   skills: ['Cloud','AWS','Terraform'],                  score: 73.1, ws: 4, intern: false, track: 'DevOps' },
+  { name: 'Ananya Singh',  skills: ['Data Analyst','Tableau','SQL'],             score: 70.5, ws: 3, intern: false, track: 'Analytics' },
+];
+
+function buildTable(data) {
+  const tbody = document.getElementById('rank-body');
+  tbody.innerHTML = '';
+  data.forEach((s, i) => {
+    const rc = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
+    const skillTags = s.skills.slice(0, 3).map(sk => `<span class="tag tag-blue">${sk}</span>`).join('') +
+      (s.skills.length > 3 ? `<span class="tag" style="color:var(--muted)">+${s.skills.length-3}</span>` : '');
+    const bar = `<div class="score-bar-wrap"><div class="score-bar"><div class="score-bar-fill" style="width:${s.score}%"></div></div><span style="font-size:0.82rem;color:var(--frost);font-weight:600;min-width:36px;text-align:right">${s.score}</span></div>`;
+    tbody.innerHTML += `<tr>
+      <td><span class="rank-badge ${rc}">${i+1}</span></td>
+      <td><div style="font-weight:600">${s.name}</div><div style="font-size:0.7rem;color:var(--muted)">${s.track}</div></td>
+      <td>${skillTags}</td>
+      <td style="min-width:160px">${bar}</td>
+      <td><span style="color:var(--gold)">${s.ws}</span></td>
+      <td>${s.intern ? '<span class="tag tag-green">Yes</span>' : '<span class="tag tag-red">No</span>'}</td>
+    </tr>`;
+  });
+}
+buildTable(students);
+
+function filterTable() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const filtered = students.filter(s =>
+    s.name.toLowerCase().includes(q) ||
+    s.skills.some(sk => sk.toLowerCase().includes(q)) ||
+    s.track.toLowerCase().includes(q)
+  );
+  buildTable(filtered);
+}
+
+// ─── ROI Bars ───
+const workshops = [
+  { name: 'DSA Bootcamp', roi: 4.8, color: 'var(--gold)' },
+  { name: 'Cloud & DevOps', roi: 4.2, color: 'var(--accent)' },
+  { name: 'ML Fundamentals', roi: 3.9, color: 'var(--green)' },
+  { name: 'Full Stack Dev', roi: 3.5, color: 'var(--glow)' },
+  { name: 'Soft Skills', roi: 2.8, color: 'var(--muted)' },
+];
+const roiEl = document.getElementById('roi-bars');
+workshops.forEach(w => {
+  const pct = (w.roi / 5) * 100;
+  roiEl.innerHTML += `<div class="progress-row">
+    <div class="progress-label"><span>${w.name}</span><span style="color:${w.color}">×${w.roi}</span></div>
+    <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:linear-gradient(90deg,${w.color},${w.color})"></div></div>
+  </div>`;
+});
+
+// ─── Breakdown Bars ───
+const breakdown = [
+  { label: 'Technical Skills', val: 85, color: 'var(--glow)' },
+  { label: 'Workshop Score', val: 78, color: 'var(--accent)' },
+  { label: 'Internship Score', val: 90, color: 'var(--green)' },
+  { label: 'Projects', val: 72, color: 'var(--gold)' },
+];
+const bbEl = document.getElementById('breakdown-bars');
+breakdown.forEach(b => {
+  bbEl.innerHTML += `<div class="progress-row">
+    <div class="progress-label"><span>${b.label}</span><span style="color:${b.color}">${b.val}/100</span></div>
+    <div class="progress-track"><div class="progress-fill" style="width:${b.val}%;background:linear-gradient(90deg,${b.color},${b.color})"></div></div>
+  </div>`;
+});
+
+// ─── Skills + HashMap ───
+let skills = ['Python', 'React', 'Node.js', 'MongoDB', 'SQL', 'Git', 'Docker', 'REST APIs', 'ML Basics'];
+
+function renderSkills() {
+  const cloud = document.getElementById('skills-cloud');
+  cloud.innerHTML = '';
+  skills.forEach((sk, i) => {
+    cloud.innerHTML += `<div class="skill-chip">${sk}<span class="rm" onclick="removeSkill(${i})">×</span></div>`;
+  });
+  document.getElementById('prof-skills').textContent = skills.length;
+  renderHashmap();
+  updateScore();
+}
+
+function addSkill() {
+  const inp = document.getElementById('skill-input');
+  const val = inp.value.trim();
+  if (val && !skills.includes(val)) {
+    skills.push(val);
+    renderSkills();
+  }
+  inp.value = '';
+}
+
+function removeSkill(i) {
+  skills.splice(i, 1);
+  renderSkills();
+}
+
+function renderHashmap() {
+  const hm = document.getElementById('hashmap');
+  hm.innerHTML = '';
+  const display = skills.slice(0, 10);
+  display.forEach(sk => {
+    const hash = sk.split('').reduce((a, c) => (a * 31 + c.charCodeAt(0)) & 0xFFFF, 0);
+    hm.innerHTML += `<div class="hash-entry">
+      <div class="hash-key">0x${hash.toString(16).toUpperCase().padStart(4,'0')}</div>
+      <div class="hash-val">${sk}</div>
+      <div class="hash-sub">bucket ${hash % 16}</div>
+    </div>`;
+  });
+}
+
+function updateScore() {
+  const base = 65 + skills.length * 1.4;
+  document.getElementById('prof-score').textContent = Math.min(99, base).toFixed(1);
+}
+
+renderSkills();
+
+// ─── BFS Path ───
+const bfsNodes = [
+  { name: 'Maths', level: 'L0', state: 'done' },
+  { name: 'Programming', level: 'L0', state: 'done' },
+  { name: 'DSA', level: 'L1', state: 'done' },
+  { name: 'DBMS', level: 'L1', state: 'done' },
+  { name: 'OS', level: 'L2', state: 'done' },
+  { name: 'Python', level: 'L2', state: 'done' },
+  { name: 'Web Dev', level: 'L3', state: 'avail' },
+  { name: 'Cloud', level: 'L3', state: 'avail' },
+  { name: 'ML', level: 'L4', state: 'locked' },
+  { name: 'DevOps', level: 'L4', state: 'locked' },
+];
+const bfsWrap = document.getElementById('bfs-path');
+bfsNodes.forEach((n, i) => {
+  const cls = n.state === 'done' ? 'bfs-done' : n.state === 'avail' ? 'bfs-avail' : 'bfs-locked';
+  const icon = n.state === 'done' ? '✓ ' : n.state === 'avail' ? '→ ' : '🔒 ';
+  bfsWrap.innerHTML += `<div class="bfs-node ${cls}"><span class="node-name">${icon}${n.name}</span><span class="node-level">${n.level}</span></div>`;
+  if (i < bfsNodes.length - 1) bfsWrap.innerHTML += `<div class="bfs-arrow">›</div>`;
+});
+</script>
+</body>
+</html>

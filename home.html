@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillBridge — Complete Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Jost:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #faf8f5;
+    --deep: #f5f0ea;
+    --mid: #ede6dc;
+    --panel: #f9f6f1;
+    --border: rgba(139,90,60,0.15);
+    --ice: #8b5a3c;
+    --frost: #3d2314;
+    --glow: #b5663a;
+    --accent: #c97b4b;
+    --gold: #8b5a3c;
+    --green: #6b7c5c;
+    --red: #c0392b;
+    --text: #3d2314;
+    --muted: rgba(93,60,40,0.6);
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --sans: 'Jost', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--navy);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  #snow { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .flake { position: absolute; top: -20px; color: rgba(139,90,60,0.3); font-size: 16px; animation: fall linear infinite; user-select: none; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(360deg); opacity: 0; } }
+
+  .aurora { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse 80% 50% at 20% 10%, rgba(181,102,58,0.06) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(201,123,75,0.04) 0%, transparent 50%); animation: auroraShift 12s ease-in-out infinite alternate; }
+  @keyframes auroraShift { from { opacity: 1; } to { opacity: 0.6; filter: hue-rotate(15deg); } }
+
+  header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 1.5rem 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: rgba(250,248,245,0.97);
+    backdrop-filter: blur(16px);
+  }
+
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-mark { width: 40px; height: 40px; border: 2px solid var(--glow); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 1.3rem; font-weight: 900; color: var(--glow); box-shadow: 0 0 16px rgba(181,102,58,0.35); }
+  .logo-text { font-family: var(--serif); font-size: 1.25rem; letter-spacing: 0.02em; }
+
+  nav { display: flex; gap: 1.5rem; }
+  .nav-link { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  .nav-link:hover { color: var(--glow); }
+
+  .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-family: var(--sans); font-weight: 600; transition: all 0.2s; }
+  .btn-primary { background: linear-gradient(135deg, var(--glow), var(--accent)); color: #faf8f5; }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); }
+
+  main { position: relative; z-index: 1; margin-top: 72px; }
+
+  .hero {
+    padding: 4rem 2.5rem;
+    text-align: center;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: 3.5rem;
+    font-weight: 900;
+    line-height: 1.1;
+    background: linear-gradient(135deg, var(--frost) 0%, var(--glow) 60%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1rem;
+  }
+
+  .hero p {
+    color: var(--muted);
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    line-height: 1.8;
+  }
+
+  .hero-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+  .features {
+    padding: 3rem 2.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .features h2 {
+    font-family: var(--serif);
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--frost);
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+
+  .feature-card {
+    background: linear-gradient(135deg, var(--mid) 0%, var(--panel) 100%);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.8rem;
+    transition: all 0.3s;
+  }
+
+  .feature-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 40px rgba(181,102,58,0.15);
+  }
+
+  .feature-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+  .feature-title { font-family: var(--serif); font-size: 1.3rem; font-weight: 700; color: var(--frost); margin-bottom: 0.8rem; }
+  .feature-desc { color: var(--muted); line-height: 1.7; margin-bottom: 1rem; }
+
+  .feature-list { list-style: none; }
+  .feature-list li { padding: 0.4rem 0; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .feature-list li:before { content: "✓"; color: var(--green); font-weight: bold; }
+
+  .pages-section {
+    padding: 3rem 2.5rem;
+    background: rgba(237,230,220,0.5);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pages-section h2 {
+    font-family: var(--serif);
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--frost);
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  .pages-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; max-width: 1200px; margin: 0 auto; }
+
+  .page-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.6rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .page-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(181,102,58,0.15);
+    border-color: var(--glow);
+  }
+
+  .page-icon { font-size: 2rem; }
+  .page-title { font-family: var(--serif); font-size: 1.2rem; font-weight: 700; color: var(--frost); }
+  .page-desc { color: var(--muted); font-size: 0.9rem; line-height: 1.6; flex: 1; }
+
+  .page-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--glow);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .stats {
+    padding: 3rem 2.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .stats h2 {
+    font-family: var(--serif);
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--frost);
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
+
+  .stat {
+    background: linear-gradient(135deg, var(--mid) 0%, var(--panel) 100%);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.6rem;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-family: var(--serif);
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--glow);
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-label { color: var(--muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.08em; }
+
+  footer {
+    text-align: center;
+    padding: 2rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 768px) {
+    header { padding: 1rem; }
+    .hero h1 { font-size: 2rem; }
+    .hero p { font-size: 1rem; }
+    .features h2 { font-size: 1.8rem; }
+    nav { gap: 1rem; }
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--deep); }
+  ::-webkit-scrollbar-thumb { background: rgba(181,102,58,0.25); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div id="snow"></div>
+<div class="aurora"></div>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">S</div>
+    <div class="logo-text">SkillBridge</div>
+  </div>
+  <nav>
+    <a href="#features" class="nav-link">Features</a>
+    <a href="#pages" class="nav-link">Pages</a>
+    <a href="#stats" class="nav-link">Stats</a>
+  </nav>
+  <button class="btn btn-primary" onclick="window.location.href='index.html'">Get Started →</button>
+</header>
+
+<main>
+  <!-- Hero Section -->
+  <section class="hero">
+    <h1>Student Placement Readiness Management System</h1>
+    <p>A complete, production-ready platform for placement preparation with separate interfaces for students, institutions, and instructors. Plus crash courses, job portal, and real-time analytics.</p>
+    <div class="hero-buttons">
+      <button class="btn btn-primary" onclick="window.location.href='index.html'">🚀 Start Now</button>
+      <button class="btn" style="background:transparent;border:1px solid var(--border);color:var(--text)" onclick="alert('Read the README.md file for full documentation')">📖 Learn More</button>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features" id="features">
+    <h2>🎯 What's Included</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🔐</div>
+        <div class="feature-title">Complete Authentication</div>
+        <div class="feature-desc">Secure login, signup with role selection, and password recovery</div>
+        <ul class="feature-list">
+          <li>Email/Password Auth</li>
+          <li>Role-based Access</li>
+          <li>Session Management</li>
+          <li>Social Login Ready</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">Advanced Dashboards</div>
+        <div class="feature-desc">Three distinct, powerful dashboards for all user types</div>
+        <ul class="feature-list">
+          <li>Student Dashboard</li>
+          <li>Institution Dashboard</li>
+          <li>Instructor Dashboard</li>
+          <li>Real-time Analytics</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">📚</div>
+        <div class="feature-title">9+ Crash Courses</div>
+        <div class="feature-desc">Professional courses from DSA to DevOps, AI/ML and more</div>
+        <ul class="feature-list">
+          <li>₹999 - ₹2,499 price range</li>
+          <li>4.5-4.9 star ratings</li>
+          <li>1000+ student enrollments</li>
+          <li>Expert instructors</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">💼</div>
+        <div class="feature-title">Job Portal</div>
+        <div class="feature-desc">500+ job listings from top companies with advanced filtering</div>
+        <ul class="feature-list">
+          <li>Google, Microsoft, Amazon</li>
+          <li>Real-time applications</li>
+          <li>Interview scheduling</li>
+          <li>Company profiles</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">⚙️</div>
+        <div class="feature-title">DSA Engine</div>
+        <div class="feature-desc">Original SkillBridge with Max-Heap, BFS Graph, HashMap, Dijkstra</div>
+        <ul class="feature-list">
+          <li>Priority Queue Ranking</li>
+          <li>Skill Prerequisite Paths</li>
+          <li>Optimal Career Routes</li>
+          <li>API Documentation</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🎨</div>
+        <div class="feature-title">Premium Design</div>
+        <div class="feature-desc">Arctic blue theme with smooth animations and responsive layout</div>
+        <ul class="feature-list">
+          <li>100% Responsive</li>
+          <li>Dark Mode Default</li>
+          <li>Smooth Animations</li>
+          <li>Zero Dependencies</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pages Section -->
+  <section class="pages-section" id="pages">
+    <h2>📄 All Pages Included</h2>
+    <div class="pages-grid">
+      <a href="index.html" class="page-card">
+        <div class="page-icon">🔐</div>
+        <div class="page-title">Login & Signup</div>
+        <div class="page-desc">Beautiful authentication with role selection and password recovery</div>
+        <div class="page-link">Open Page →</div>
+      </a>
+
+      <a href="dashboard-user.html" class="page-card">
+        <div class="page-icon">👤</div>
+        <div class="page-title">Student Dashboard</div>
+        <div class="page-desc">Personalized readiness tracking, courses, and next steps</div>
+        <div class="page-link">Open Page →</div>
+      </a>
+
+      <a href="dashboard-institution.html" class="page-card">
+        <div class="page-icon">🏛️</div>
+        <div class="page-title">Institution Dashboard</div>
+        <div class="page-desc">Analytics, student management, and workshop ROI tracking</div>
+        <div class="page-link">Open Page →</div>
+      </a>
+
+      <a href="dashboard-instructor.html" class="page-card">
+        <div class="page-icon">👨‍🏫</div>
+        <div class="page-title">Instructor Dashboard</div>
+        <div class="page-desc">Create courses, schedule live sessions, manage students</div>
+        <div class="page-link">Open Page →</div>
+      </a>
+
+      <a href="courses.html" class="page-card">
+        <div class="page-icon">📚</div>
+        <div class="page-title">Courses Catalog</div>
+        <div class="page-desc">Browse 9+ professional courses with search and filtering</div>
+        <div class="page-link">Open Page →</div>
+      </a>
+
+      <a href="jobs.html" class="page-card">
+        <div class="page-icon">💼</div>
+        <div class="page-title">Jobs & Companies</div>
+        <div class="page-desc">500+ jobs from top companies with application tracking</div>
+        <div class="page-link">Open Page →</div>
+      </a>
+
+      <a href="sprms.html" class="page-card">
+        <div class="page-icon">⚙️</div>
+        <div class="page-title">SkillBridge DSA Engine</div>
+        <div class="page-desc">Original advanced DSA implementation with visualizations</div>
+        <div class="page-link">Open Page →</div>
+      </a>
+
+      <a href="README.md" class="page-card">
+        <div class="page-icon">📖</div>
+        <div class="page-title">Documentation</div>
+        <div class="page-desc">Complete guide with setup, features, and customization</div>
+        <div class="page-link">Read Docs →</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="stats" id="stats">
+    <h2>📈 By The Numbers</h2>
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="stat-value">6</div>
+        <div class="stat-label">Complete Dashboards</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">9+</div>
+        <div class="stat-label">Crash Courses</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">500+</div>
+        <div class="stat-label">Job Listings</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">24+</div>
+        <div class="stat-label">Verified Companies</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">1000+</div>
+        <div class="stat-label">Student Records</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">100%</div>
+        <div class="stat-label">Responsive Design</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>Built with ❄️ for the future of education and placement preparation</p>
+  <p style="margin-top:0.5rem">SkillBridge v2.0 | Complete Web Application Platform</p>
+</footer>
+
+<script>
+  const snow = document.getElementById('snow');
+  const FLAKES = ['❄','❅','❆','✦','·','*'];
+  for (let i = 0; i < 45; i++) {
+    const f = document.createElement('div');
+    f.className = 'flake';
+    f.textContent = FLAKES[Math.floor(Math.random() * FLAKES.length)];
+    f.style.left = Math.random() * 100 + '%';
+    f.style.fontSize = (10 + Math.random() * 18) + 'px';
+    f.style.opacity = 0.3 + Math.random() * 0.5;
+    const dur = 8 + Math.random() * 14;
+    f.style.animationDuration = dur + 's';
+    f.style.animationDelay = -Math.random() * dur + 's';
+    snow.appendChild(f);
+  }
+</script>
+
+
+<!-- Supabase SDK + Shared Auth -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
+</body>
+</html>

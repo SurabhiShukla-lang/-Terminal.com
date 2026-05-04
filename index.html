@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillBridge — Login & Signup</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Jost:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #faf8f5;
+    --deep: #f5f0ea;
+    --mid: #ede6dc;
+    --panel: #f9f6f1;
+    --border: rgba(139,90,60,0.15);
+    --ice: #8b5a3c;
+    --frost: #3d2314;
+    --glow: #b5663a;
+    --accent: #c97b4b;
+    --gold: #8b5a3c;
+    --green: #6b7c5c;
+    --red: #c0392b;
+    --text: #3d2314;
+    --muted: rgba(93,60,40,0.6);
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --sans: 'Jost', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--navy);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Snowflakes */
+  #snow { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .flake {
+    position: absolute;
+    top: -20px;
+    color: rgba(139,90,60,0.3);
+    font-size: 16px;
+    animation: fall linear infinite;
+    user-select: none;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+  }
+
+  /* Aurora background */
+  .aurora {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: radial-gradient(ellipse 80% 50% at 20% 10%, rgba(181,102,58,0.06) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(201,123,75,0.04) 0%, transparent 50%);
+    animation: auroraShift 12s ease-in-out infinite alternate;
+  }
+  @keyframes auroraShift {
+    from { opacity: 1; }
+    to { opacity: 0.6; filter: hue-rotate(15deg); }
+  }
+
+  /* Main container */
+  .container {
+    position: relative;
+    z-index: 10;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .auth-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    max-width: 1200px;
+    width: 100%;
+    align-items: center;
+  }
+
+  /* Hero section */
+  .hero {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .logo-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 1rem;
+  }
+
+  .logo-mark {
+    width: 60px;
+    height: 60px;
+    border: 3px solid var(--glow);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--serif);
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--glow);
+    box-shadow: 0 0 24px rgba(181,102,58,0.4);
+  }
+
+  .logo-text {
+    font-family: var(--serif);
+    font-size: 2.5rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--frost), var(--glow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero h2 {
+    font-family: var(--serif);
+    font-size: 2.8rem;
+    font-weight: 900;
+    line-height: 1.2;
+    background: linear-gradient(135deg, var(--frost) 0%, var(--glow) 60%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-top: 1rem;
+  }
+
+  .hero p {
+    color: var(--muted);
+    font-size: 1.1rem;
+    line-height: 1.8;
+  }
+
+  .features {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    margin-top: 1.5rem;
+  }
+
+  .feature-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .feature-icon {
+    font-size: 1.8rem;
+    flex-shrink: 0;
+  }
+
+  .feature-text h4 {
+    color: var(--frost);
+    font-size: 1rem;
+    margin-bottom: 3px;
+  }
+
+  .feature-text p {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  /* Auth forms */
+  .auth-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2.5rem;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+
+  .auth-panel h3 {
+    font-family: var(--serif);
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--frost);
+    margin-bottom: 0.5rem;
+  }
+
+  .auth-panel > p {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 1.8rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .form-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--frost);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .form-group input,
+  .form-group select {
+    padding: 12px 16px;
+    background: var(--mid);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus {
+    border-color: var(--glow);
+    background: rgba(181,102,58,0.05);
+    box-shadow: 0 0 0 3px rgba(181,102,58,0.1);
+  }
+
+  .form-group input::placeholder {
+    color: var(--muted);
+  }
+
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+  }
+
+  .checkbox-group input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--glow);
+  }
+
+  .checkbox-group label {
+    font-size: 0.85rem;
+    cursor: pointer;
+    margin: 0;
+    text-transform: none;
+  }
+
+  .checkbox-group a {
+    color: var(--glow);
+    text-decoration: none;
+  }
+
+  .checkbox-group a:hover {
+    text-decoration: underline;
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    font-family: var(--sans);
+    font-size: 1rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--glow), var(--accent));
+    color: #faf8f5;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 1rem;
+  }
+
+  .btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(181,102,58,0.3);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .divider::before,
+  .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .social-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .btn-social {
+    padding: 12px;
+    border: 1px solid var(--border);
+    background: transparent;
+    border-radius: 10px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+
+  .btn-social:hover {
+    background: rgba(181,102,58,0.1);
+    border-color: var(--glow);
+  }
+
+  .toggle-link {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  .toggle-link a {
+    color: var(--glow);
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .toggle-link a:hover {
+    text-decoration: underline;
+  }
+
+  .tab-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--border);
+    background: transparent;
+    border-radius: 8px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .tab-btn.active {
+    background: rgba(181,102,58,0.15);
+    border-color: var(--glow);
+    color: var(--glow);
+  }
+
+  .form-container {
+    display: none;
+  }
+
+  .form-container.active {
+    display: block;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .role-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .role-option {
+    padding: 1.2rem;
+    border: 2px solid var(--border);
+    background: transparent;
+    border-radius: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .role-option:hover {
+    border-color: var(--glow);
+  }
+
+  .role-option.selected {
+    background: rgba(181,102,58,0.15);
+    border-color: var(--glow);
+    color: var(--glow);
+  }
+
+  .role-option-icon {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .error-message {
+    padding: 10px 12px;
+    background: rgba(255,107,138,0.15);
+    border: 1px solid rgba(255,107,138,0.3);
+    border-radius: 8px;
+    color: var(--red);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    display: none;
+  }
+
+  .success-message {
+    padding: 10px 12px;
+    background: rgba(79,255,176,0.15);
+    border: 1px solid rgba(79,255,176,0.3);
+    border-radius: 8px;
+    color: var(--green);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    display: none;
+  }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .auth-wrapper {
+      grid-template-columns: 1fr;
+    }
+    .hero {
+      order: 2;
+    }
+    .hero h2 {
+      font-size: 2rem;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .auth-panel {
+      padding: 1.5rem;
+    }
+    .auth-panel h3 {
+      font-size: 1.4rem;
+    }
+    .logo-text {
+      font-size: 1.8rem;
+    }
+    .hero h2 {
+      font-size: 1.5rem;
+    }
+    .role-selector {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div id="snow"></div>
+<div class="aurora"></div>
+
+<div class="container">
+  <div class="auth-wrapper">
+    <!-- Hero Section -->
+    <div class="hero">
+      <div class="logo-section">
+        <div class="logo-mark">S</div>
+        <div class="logo-text">SkillBridge</div>
+      </div>
+      <h2>Placement Readiness, Reimagined — SkillBridge</h2>
+      <p>Join thousands of students preparing for their dream placements. Get personalized learning paths, track your progress, and connect with top companies.</p>
+      
+      <div class="features">
+        <div class="feature-item">
+          <div class="feature-icon">⚡</div>
+          <div class="feature-text">
+            <h4>Smart Analytics</h4>
+            <p>AI-powered insights on your placement readiness</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📚</div>
+          <div class="feature-text">
+            <h4>Crash Courses</h4>
+            <p>Expert-led programs designed by industry pros</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🏆</div>
+          <div class="feature-text">
+            <h4>Live Rankings</h4>
+            <p>Compete with peers and rise on the leaderboard</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">💼</div>
+          <div class="feature-text">
+            <h4>Job Opportunities</h4>
+            <p>Connect with 500+ verified companies instantly</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auth Panel -->
+    <div class="auth-panel">
+      <div class="tab-buttons">
+        <button class="tab-btn active" onclick="switchAuthTab('login')">Login</button>
+        <button class="tab-btn" onclick="switchAuthTab('signup')">Sign Up</button>
+        <button class="tab-btn" onclick="switchAuthTab('forgot')">Help</button>
+      </div>
+
+      <!-- Login Form -->
+      <div class="form-container active" id="login-form">
+        <h3>Welcome Back</h3>
+        <p>Sign in to your account to continue</p>
+        
+        <div class="error-message" id="login-error"></div>
+        
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="login-email" placeholder="you@example.com">
+        </div>
+        
+        <div class="form-group">
+          <label>University Roll No. (optional)</label>
+          <input type="text" id="login-roll" placeholder="e.g., 2019CS1001">
+        </div>
+
+        <div class="form-group">
+          <label>Institution Code (optional)</label>
+          <input type="text" id="login-inst-code" placeholder="e.g., INST-001">
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="login-password" placeholder="••••••••">
+        </div>
+        
+        <div class="checkbox-group">
+          <input type="checkbox" id="login-remember">
+          <label for="login-remember">Remember me</label>
+        </div>
+        
+        <button class="btn-primary" onclick="handleLogin()">Sign In</button>
+        
+        <div class="divider">OR</div>
+        
+        <div class="social-buttons">
+          <button class="btn-social">Google</button>
+          <button class="btn-social">GitHub</button>
+        </div>
+        
+        <div class="toggle-link">
+          Don't have an account? <a onclick="switchAuthTab('signup')">Sign up here</a>
+        </div>
+      </div>
+
+      <!-- Signup Form -->
+      <div class="form-container" id="signup-form">
+        <h3>Create Your Account</h3>
+        <p>Join SkillBridge and start your placement journey</p>
+        
+        <div class="success-message" id="signup-success"></div>
+        <div class="error-message" id="signup-error"></div>
+        
+        <div class="form-group">
+          <label>Select Your Role</label>
+          <div class="role-selector">
+            <button type="button" class="role-option" onclick="selectRole('student', this)">
+              <div class="role-option-icon">👤</div>
+              <div>Student</div>
+            </button>
+            <button type="button" class="role-option" onclick="selectRole('institution', this)">
+              <div class="role-option-icon">🏛️</div>
+              <div>Institution</div>
+            </button>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="signup-name" placeholder="John Doe">
+        </div>
+        
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="signup-email" placeholder="you@example.com">
+        </div>
+        
+        <div class="form-group" id="org-field" style="display:none;">
+          <label>Organization Name</label>
+          <input type="text" id="signup-org" placeholder="College/Company Name">
+        </div>
+
+        <div id="student-fields" style="display:none;">
+          <div class="form-group">
+            <label>University Roll No.</label>
+            <input type="text" id="signup-roll" placeholder="e.g., 2019CS1001">
+          </div>
+          <div class="form-group">
+            <label>Program / Branch</label>
+            <input type="text" id="signup-program" placeholder="e.g., B.Tech - CSE">
+          </div>
+          <div class="form-group">
+            <label>Enrollment Year</label>
+            <input type="number" id="signup-enroll" placeholder="e.g., 2019">
+          </div>
+        </div>
+
+        <div id="institution-fields" style="display:none;">
+          <div class="form-group">
+            <label>Institution Registration No.</label>
+            <input type="text" id="signup-inst-reg" placeholder="e.g., REG-123456">
+          </div>
+          <div class="form-group">
+            <label>Institution Code</label>
+            <input type="text" id="signup-inst-code" placeholder="e.g., INST-001">
+          </div>
+          <div class="form-group">
+            <label>Contact Person</label>
+            <input type="text" id="signup-inst-contact" placeholder="Name & role">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="signup-password" placeholder="Min 8 characters">
+        </div>
+        
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <input type="password" id="signup-confirm" placeholder="Confirm password">
+        </div>
+        
+        <div class="checkbox-group">
+          <input type="checkbox" id="signup-agree">
+          <label for="signup-agree">I agree to <a href="#">Terms</a> and <a href="#">Privacy Policy</a></label>
+        </div>
+        
+        <button class="btn-primary" onclick="handleSignup()">Create Account</button>
+        
+        <div class="toggle-link">
+          Already have an account? <a onclick="switchAuthTab('login')">Sign in here</a>
+        </div>
+      </div>
+
+      <!-- Forgot Password Form -->
+      <div class="form-container" id="forgot-form">
+        <h3>Need Help?</h3>
+        <p>We'll help you recover your account access</p>
+        
+        <div class="error-message" id="forgot-error"></div>
+        <div class="success-message" id="forgot-success"></div>
+        
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="forgot-email" placeholder="you@example.com">
+        </div>
+        
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1.5rem">
+          Enter your email and we'll send you a link to reset your password
+        </p>
+        
+        <button class="btn-primary" onclick="handleForgot()">Send Reset Link</button>
+        
+        <div class="toggle-link">
+          Remember your password? <a onclick="switchAuthTab('login')">Sign in here</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+<!-- ===== SUPABASE INTEGRATION ===== -->
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// ============================================================
+//  CONFIGURATION
+// ============================================================
+const SUPABASE_URL    = 'https://zqcgjtwvwndrieixhjgc.supabase.co';
+const SUPABASE_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpxY2dqdHd2d25kcmllaXhoamdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MTE5MDMsImV4cCI6MjA5MzI4NzkwM30.Rs0glR7Zcb_n1ALkSZgbvMDdIWll6x3GnZ5ACa1WOZ8';
+
+// Init SDK
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false
+  }
+});
+
+// App state
+let selectedRole = null;
+
+// ============================================================
+//  SNOWFLAKES
+// ============================================================
+const snow = document.getElementById('snow');
+const FLAKES = ['❄','❅','❆','✦','·','*'];
+for (let i = 0; i < 45; i++) {
+  const f = document.createElement('div');
+  f.className = 'flake';
+  f.textContent = FLAKES[Math.floor(Math.random() * FLAKES.length)];
+  f.style.left = Math.random() * 100 + '%';
+  f.style.fontSize = (10 + Math.random() * 18) + 'px';
+  f.style.opacity = 0.3 + Math.random() * 0.5;
+  const dur = 8 + Math.random() * 14;
+  f.style.animationDuration = dur + 's';
+  f.style.animationDelay = -Math.random() * dur + 's';
+  snow.appendChild(f);
+}
+
+// ============================================================
+//  UI HELPERS
+// ============================================================
+function switchAuthTab(tab) {
+  document.querySelectorAll('.form-container').forEach(f => f.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(tab + '-form').classList.add('active');
+  // highlight the right tab button
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.getAttribute('onclick') && b.getAttribute('onclick').includes("'" + tab + "'")) {
+      b.classList.add('active');
+    }
+  });
+}
+
+function selectRole(role, el) {
+  selectedRole = role;
+  document.querySelectorAll('.role-option').forEach(r => r.classList.remove('selected'));
+  el.closest('.role-option').classList.add('selected');
+  document.getElementById('org-field').style.display = role === 'institution' ? 'block' : 'none';
+  document.getElementById('student-fields').style.display = role === 'student' ? 'block' : 'none';
+  document.getElementById('institution-fields').style.display = role === 'institution' ? 'block' : 'none';
+}
+
+function showError(id, msg) {
+  console.error('Error:', msg);
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 8000);
+}
+
+function showSuccess(id, msg) {
+  console.log('Success:', msg);
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 8000);
+}
+
+// ============================================================
+//  SIGN UP — validates form then creates account directly
+// ============================================================
+async function handleSignup() {
+  const name     = document.getElementById('signup-name').value.trim();
+  const email    = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value.trim();
+  const confirm  = document.getElementById('signup-confirm').value.trim();
+  const agree    = document.getElementById('signup-agree').checked;
+
+  if (!selectedRole)                return showError('signup-error', '⚠️ Please select a role first');
+  if (!name || !email || !password) return showError('signup-error', '⚠️ Please fill all required fields');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError('signup-error', '⚠️ Enter a valid email address');
+  if (password.length < 8)          return showError('signup-error', '⚠️ Password must be at least 8 characters');
+  if (password !== confirm)         return showError('signup-error', '⚠️ Passwords do not match');
+  if (!agree)                       return showError('signup-error', '⚠️ Please agree to terms and conditions');
+
+  const btn = document.querySelector('#signup-form .btn-primary');
+  btn.disabled = true;
+  btn.textContent = 'Creating account...';
+
+  try {
+    // collect role-specific identification fields
+    const org = document.getElementById('signup-org')?.value.trim() || null;
+    const studentInfo = selectedRole === 'student' ? {
+      roll    : (document.getElementById('signup-roll')?.value || '').trim() || null,
+      program : (document.getElementById('signup-program')?.value || '').trim() || null,
+      enroll  : (document.getElementById('signup-enroll')?.value || '').trim() || null
+    } : null;
+    const instInfo = selectedRole === 'institution' ? {
+      reg_no  : (document.getElementById('signup-inst-reg')?.value || '').trim() || null,
+      code    : (document.getElementById('signup-inst-code')?.value || '').trim() || null,
+      contact : (document.getElementById('signup-inst-contact')?.value || '').trim() || null
+    } : null;
+
+    // basic additional validation
+    if (selectedRole === 'student' && (!studentInfo.roll || !studentInfo.program)) {
+      btn.disabled = false; btn.textContent = 'Create Account';
+      return showError('signup-error', '⚠️ Please provide university roll number and program');
+    }
+    if (selectedRole === 'institution' && (!instInfo.reg_no || !instInfo.code)) {
+      btn.disabled = false; btn.textContent = 'Create Account';
+      return showError('signup-error', '⚠️ Please provide institution registration number and code');
+    }
+
+    // For development: bypass Supabase auth and use localStorage
+    // Create mock user data
+    const mockUserId = 'dev-user-' + Date.now();
+    const mockUser = {
+      id: mockUserId,
+      name: name,
+      email: email,
+      role: selectedRole,
+      org: org,
+      student: studentInfo,
+      institution: instInfo,
+      verified: true,
+      created_at: new Date().toISOString()
+    };
+
+    // Store in localStorage (normally this would be in database)
+    localStorage.setItem('user', JSON.stringify(mockUser));
+
+    showSuccess('signup-success', '✅ Account created successfully! Redirecting...');
+    // Institution users skip assessment and go directly to their dashboard
+    const redirectUrl = selectedRole === 'institution' ? 'dashboard-institution.html' : 'assessment.html';
+    setTimeout(() => window.location.href = redirectUrl, 1800);
+
+  } catch (err) {
+    console.error('Account creation error:', err);
+    const errorMsg = err.message || 'Account creation failed. Try again.';
+    if (errorMsg.includes('rate limit') || errorMsg.includes('Rate limit')) {
+      showError('signup-error', '❌ Too many signup attempts. Please wait a few minutes before trying again.');
+    } else {
+      showError('signup-error', '❌ ' + errorMsg);
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Create Account';
+  }
+}
+
+// ============================================================
+//  LOGIN
+// ============================================================
+async function handleLogin() {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value.trim();
+  const enteredRoll = (document.getElementById('login-roll')?.value || '').trim();
+  const enteredInst = (document.getElementById('login-inst-code')?.value || '').trim();
+
+  if (!email || !password) return showError('login-error', '⚠️ Please fill all fields');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError('login-error', '⚠️ Enter a valid email');
+
+  const btn = document.querySelector('#login-form .btn-primary');
+  btn.disabled = true;
+  btn.textContent = 'Signing in...';
+
+  try {
+    // For development: check localStorage for mock user
+    const storedUser = localStorage.getItem('user');
+    if (!storedUser) throw new Error('No account found. Please sign up first.');
+
+    const user = JSON.parse(storedUser);
+    if (user.email !== email) throw new Error('Invalid email or password.');
+
+    // Mock password check (in development, we don't store passwords)
+    // In production, this would be handled by Supabase
+
+    showSuccess('login-error', '✅ Login successful! Redirecting...');
+    // Institution users skip assessment and go directly to their dashboard
+    let redirectUrl;
+    if (user.role === 'institution') {
+      redirectUrl = 'dashboard-institution.html';
+    } else if (user.onboardingComplete) {
+      redirectUrl = 'dashboard-user.html';
+    } else {
+      redirectUrl = 'assessment.html';
+    }
+    setTimeout(() => window.location.href = redirectUrl, 1500);
+
+  } catch (err) {
+    showError('login-error', '❌ ' + (err.message || 'Login failed. Check your credentials.'));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
+}
+
+// ============================================================
+//  FORGOT PASSWORD
+// ============================================================
+async function handleForgot() {
+  const email = document.getElementById('forgot-email').value.trim();
+  if (!email) return showError('forgot-error', '⚠️ Please enter your email');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError('forgot-error', '⚠️ Enter a valid email');
+
+  const btn = document.querySelector('#forgot-form .btn-primary');
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+
+  try {
+    const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/index.html' });
+    if (error) throw error;
+    showSuccess('forgot-success', '✅ Password reset email sent! Check your inbox.');
+    document.getElementById('forgot-email').value = '';
+  } catch (err) {
+    showError('forgot-error', '❌ ' + (err.message || 'Could not send reset email.'));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send Reset Link';
+  }
+}
+</script>
+
+</body>
+</html>
